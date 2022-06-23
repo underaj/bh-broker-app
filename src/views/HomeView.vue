@@ -1,23 +1,35 @@
 <script>
+import jsonExcel from "vue-json-excel3";
+import draggable from "vuedraggable";
 import axios from "axios";
 import qs from "qs";
+
 export default {
-  components: {},
+  components: {
+    draggable,
+    jsonExcel,
+  },
 
   data() {
     return {
+      visible: false,
       planList: [],
       plan: [],
       chosenPlan: [],
       selectionList: [],
       answerList: {},
       final: {},
+      header: [],
+      rowData: [],
     };
   },
   mounted() {
     this.getPlans();
   },
   methods: {
+    showModal() {
+      this.visible = true;
+    },
     getPlans() {
       axios.get("/api/plans").then((res) => {
         this.planList = res.data.data.plans;
@@ -60,7 +72,6 @@ export default {
           });
           this.answerList = answerList;
           this.final = final;
-          console.log(answerList, final);
         });
     },
     checkIfHaveValue(item, plan) {
@@ -73,7 +84,21 @@ export default {
       return show;
     },
     exportExcel() {
-      console.log(this.final);
+      const header = ["保险医疗计划"];
+      const rowData = [];
+      this.selectionList.forEach((titleItem) => {
+        const row = {
+          " ": titleItem.name,
+        };
+        this.chosenPlan.forEach((plan) => {
+          row[`${plan.name} - ${plan.productName}`] =
+            this.final[plan.id][titleItem.name];
+        });
+        rowData.push(row);
+      });
+      this.header = header;
+      this.rowData = rowData;
+      this.showModal();
     },
   },
 };
@@ -98,8 +123,8 @@ export default {
           {{ `${option.name} - ${option.productName}` }}
         </a-select-option>
       </a-select>
-      <a-button @click="getDetails">获取计划信息</a-button>
-      <a-button class="export-button" @click="exportExcel">导出列表</a-button>
+      <a-button type="primary" @click="getDetails">获取计划信息</a-button>
+      <a-button type="primary" class="export-button" @click="exportExcel">导出列表</a-button>
     </div>
     <div class="title-container">
       <div class="title-item" v-for="(item, i) in chosenPlan" :key="i">
@@ -107,34 +132,56 @@ export default {
       </div>
     </div>
     <div class="content-container">
-      <div
-        class="value-container"
-        v-for="(valueItem, i) in selectionList"
-        :key="i"
-      >
-        <div class="value-title">{{ valueItem.name }}</div>
-        <div
-          class="value-select-container"
-          v-for="(plan, y) in chosenPlan"
-          :key="y"
-        >
-          <div v-if="checkIfHaveValue(valueItem, plan)">
-            <a-select
-              :style="{ width: '180px' }"
-              v-model:value="final[plan.id][valueItem.name]"
+      <draggable v-model="selectionList" item-key="name">
+        <template #item="{ element }">
+          <div class="value-container">
+            <div class="value-title">{{ element.name }}</div>
+            <div
+              class="value-select-container"
+              v-for="(plan, y) in chosenPlan"
+              :key="y"
             >
-              <a-select-option
-                v-for="(value, x) in answerList[valueItem.name][plan.id]"
-                :key="`value-${x}`"
-                :value="value"
-              >
-                {{ value }}
-              </a-select-option>
-            </a-select>
+              <div v-if="checkIfHaveValue(element, plan)">
+                <a-select
+                  :style="{ width: '180px' }"
+                  v-model:value="final[plan.id][element.name]"
+                >
+                  <a-select-option
+                    v-for="(value, x) in answerList[element.name][plan.id]"
+                    :key="`value-${x}`"
+                    :value="value"
+                  >
+                    {{ value }}
+                  </a-select-option>
+                </a-select>
+              </div>
+            </div>
           </div>
+        </template>
+      </draggable>
+    </div>
+    <a-modal
+      ref="modalRef"
+      v-model:visible="visible"
+      :wrap-style="{ overflow: 'hidden' }"
+      :title="null"
+      :footer="null"
+    >
+      <div class="modal-container">
+        <p>确定下载Excel？</p>
+        <div class="modal-button-row">
+          <a-button style="margin-right: 8px" @click="visible = false">取消</a-button>
+          <json-excel
+            :data="rowData"
+            :header="header"
+            name="保险医疗计划"
+            type="xls"
+          >
+            <a-button type="primary">确定下载</a-button>
+          </json-excel>
         </div>
       </div>
-    </div>
+    </a-modal>
   </main>
 </template>
 
@@ -174,9 +221,18 @@ export default {
 }
 .value-title {
   width: 200px;
-  text-align: center;
+  text-align: left;
+  margin: 0 16px;
 }
 .value-select-container {
   width: 200px;
+}
+.modal-container {
+  margin: 24px 24px 6px 24px;
+}
+.modal-button-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
 }
 </style>
