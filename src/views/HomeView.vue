@@ -1,4 +1,5 @@
 <script>
+import { DragOutlined } from '@ant-design/icons-vue';
 import jsonExcel from "vue-json-excel3";
 import draggable from "vuedraggable";
 import axios from "axios";
@@ -6,6 +7,7 @@ import qs from "qs";
 
 export default {
   components: {
+    DragOutlined,
     draggable,
     jsonExcel,
   },
@@ -123,7 +125,7 @@ export default {
           {{ `${option.name} - ${option.productName}` }}
         </a-select-option>
       </a-select>
-      <a-button type="primary" @click="getDetails">获取计划信息</a-button>
+      <a-button type="primary" style="margin-left: 2px" @click="getDetails">获取计划信息</a-button>
       <a-button type="primary" class="export-button" @click="exportExcel">导出列表</a-button>
     </div>
     <div class="title-container">
@@ -132,9 +134,10 @@ export default {
       </div>
     </div>
     <div class="content-container">
-      <draggable v-model="selectionList" item-key="name">
+      <draggable v-model="selectionList" item-key="name" handle=".handle">
         <template #item="{ element }">
           <div class="value-container">
+            <drag-outlined class="handle" />
             <div class="value-title">{{ element.name }}</div>
             <div
               class="value-select-container"
@@ -199,12 +202,12 @@ export default {
   padding: 0 24px 24px;
 }
 .export-button {
-  margin-left: 24px;
+  margin-left: 12px;
 }
 .title-container {
   display: flex;
   flex-direction: row;
-  margin-left: 224px;
+  margin-left: 254px;
 }
 .title-item {
   width: 200px;
