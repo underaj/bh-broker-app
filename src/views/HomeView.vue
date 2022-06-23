@@ -3,5 +3,8 @@
 
 <template>
   <main>
+    <div>
+      abc
+    </div>
   </main>
 </template>
