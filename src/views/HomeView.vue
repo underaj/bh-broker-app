@@ -1,5 +1,5 @@
 <script>
-import { DragOutlined } from '@ant-design/icons-vue';
+import { DragOutlined } from "@ant-design/icons-vue";
 import jsonExcel from "vue-json-excel3";
 import draggable from "vuedraggable";
 import axios from "axios";
@@ -125,8 +125,12 @@ export default {
           {{ `${option.name} - ${option.productName}` }}
         </a-select-option>
       </a-select>
-      <a-button type="primary" style="margin-left: 2px" @click="getDetails">获取计划信息</a-button>
-      <a-button type="primary" class="export-button" @click="exportExcel">导出列表</a-button>
+      <a-button type="primary" style="margin-left: 2px" @click="getDetails"
+        >获取计划信息</a-button
+      >
+      <a-button type="primary" class="export-button" @click="exportExcel"
+        >导出列表</a-button
+      >
     </div>
     <div class="title-container">
       <div class="title-item" v-for="(item, i) in chosenPlan" :key="i">
@@ -173,7 +177,9 @@ export default {
       <div class="modal-container">
         <p>确定下载Excel？</p>
         <div class="modal-button-row">
-          <a-button style="margin-right: 8px" @click="visible = false">取消</a-button>
+          <a-button style="margin-right: 8px" @click="visible = false"
+            >取消</a-button
+          >
           <json-excel
             :data="rowData"
             :header="header"
