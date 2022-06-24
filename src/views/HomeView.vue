@@ -57,7 +57,8 @@ export default {
           this.selectionList = res.data.data.items;
           const final = {};
           const answerList = {};
-          this.selectionList.forEach((item) => {
+          this.selectionList.forEach((item, i) => {
+            this.selectionList[i].active = true;
             this.chosenPlan.forEach((plan) => {
               if (!final[plan.id]) {
                 final[plan.id] = {};
@@ -91,16 +92,19 @@ export default {
     exportExcel() {
       const header = ["保险医疗计划"];
       const rowData = [];
-      this.selectionList.forEach((titleItem) => {
-        const row = {
-          " ": titleItem.name,
-        };
-        this.chosenPlan.forEach((plan) => {
-          row[`${plan.name} - ${plan.productName}`] =
-            this.final[plan.id][titleItem.name];
-        });
-        rowData.push(row);
+      this.selectionList.forEach((valueItem) => {
+        if (valueItem.active) {
+          const row = {
+            " ": valueItem.name,
+          };
+          this.chosenPlan.forEach((plan) => {
+            row[`${plan.name} - ${plan.productName}`] =
+              this.final[plan.id][valueItem.name];
+          });
+          rowData.push(row);
+        }
       });
+      console.log('here', rowData);
       this.header = header;
       this.rowData = rowData;
       this.showModal();
@@ -141,6 +145,9 @@ export default {
       <div class="title-item" v-for="(item, i) in chosenPlan" :key="i">
         {{ `${item.name} - ${item.productName}` }}
       </div>
+      <div v-if="chosenPlan.length > 0" class="active-title-container">
+        是否显示
+      </div>
     </div>
     <div class="content-container">
       <draggable v-model="selectionList" item-key="name" handle=".handle">
@@ -167,6 +174,9 @@ export default {
                   </a-select-option>
                 </a-select>
               </div>
+            </div>
+            <div class="active-value-container">
+              <a-checkbox v-model:checked="element.active"></a-checkbox>
             </div>
           </div>
         </template>
@@ -222,6 +232,14 @@ export default {
 }
 .title-item {
   width: 200px;
+  text-align: center;
+}
+.active-title-container {
+  width: 100px;
+  text-align: center;
+}
+.active-value-container {
+  width: 70px;
   text-align: center;
 }
 .content-container {
