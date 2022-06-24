@@ -37,6 +37,9 @@ export default {
         this.planList = res.data.data.plans;
       });
     },
+    filterOption(input, option) {
+      return option.key.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+    },
     getDetails() {
       const planId = [];
       Object.keys(this.plan).forEach((key) => {
@@ -114,15 +117,17 @@ export default {
       <a-select
         :style="{ width: '400px' }"
         v-model:value="plan"
+        show-search
         mode="multiple"
         placeholder="请选择计划"
+        :filter-option="filterOption"
       >
         <a-select-option
           v-for="(option, x) in planList"
-          :key="`option-${x}`"
+          :key="`${option.payer}-${option.name}-${option.productName}-${x}`"
           :value="option.id"
         >
-          {{ `${option.name} - ${option.productName}` }}
+          {{ `${option.payer}-${option.name}-${option.productName}` }}
         </a-select-option>
       </a-select>
       <a-button type="primary" style="margin-left: 2px" @click="getDetails"
