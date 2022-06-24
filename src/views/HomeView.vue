@@ -68,6 +68,9 @@ export default {
             answerList[item.name] = {};
             item.values.forEach((valueItem) => {
               valueItem.planIds.forEach((id) => {
+                if (!final[id][item.name]) {
+                  final[id][item.name] = valueItem.value;
+                }
                 if (answerList[item.name][id]) {
                   answerList[item.name][id].push(valueItem.value);
                 } else {
