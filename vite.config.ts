@@ -13,6 +13,7 @@ export default defineConfig({
     },
   },
   server: {
+    port: 8010,
     proxy: {
       "/api": {
         target: "http://apibroker.nf-insure.com",
