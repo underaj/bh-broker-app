@@ -5,8 +5,6 @@ import draggable from "vuedraggable";
 import axios from "axios";
 import qs from "qs";
 
-import "vue-select/dist/vue-select.css";
-
 export default {
   components: {
     DownOutlined,
