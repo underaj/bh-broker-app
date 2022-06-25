@@ -1,12 +1,15 @@
 <script>
-import { DragOutlined } from "@ant-design/icons-vue";
+import { DragOutlined, DownOutlined } from "@ant-design/icons-vue";
 import jsonExcel from "vue-json-excel3";
 import draggable from "vuedraggable";
 import axios from "axios";
 import qs from "qs";
 
+import "vue-select/dist/vue-select.css";
+
 export default {
   components: {
+    DownOutlined,
     DragOutlined,
     draggable,
     jsonExcel,
@@ -29,6 +32,9 @@ export default {
     this.getPlans();
   },
   methods: {
+    setSelected(value, planId, selectionName) {
+      this.final[planId][selectionName] = value;
+    },
     showModal() {
       this.visible = true;
     },
@@ -107,7 +113,7 @@ export default {
           rowData.push(row);
         }
       });
-      console.log('here', rowData);
+      console.log("here", rowData);
       this.header = header;
       this.rowData = rowData;
       this.showModal();
@@ -163,19 +169,33 @@ export default {
               v-for="(plan, y) in chosenPlan"
               :key="y"
             >
-              <div v-if="checkIfHaveValue(element, plan)">
-                <a-select
-                  :style="{ width: '180px' }"
+              <div>
+                <a-input
+                  :style="{ width: '190px', padding: '2px 2px 2px 11px' }"
                   v-model:value="final[plan.id][element.name]"
                 >
-                  <a-select-option
-                    v-for="(value, x) in answerList[element.name][plan.id]"
-                    :key="`value-${x}`"
-                    :value="value"
-                  >
-                    {{ value }}
-                  </a-select-option>
-                </a-select>
+                  <template #suffix>
+                    <a-dropdown>
+                      <template #overlay>
+                        <a-menu
+                          @click="
+                            ({ key }) => setSelected(key, plan.id, element.name)
+                          "
+                        >
+                          <a-menu-item
+                            v-for="value in answerList[element.name][plan.id]"
+                            :key="value"
+                          >
+                            {{ value }}
+                          </a-menu-item>
+                        </a-menu>
+                      </template>
+                      <a-button type="text">
+                        <DownOutlined />
+                      </a-button>
+                    </a-dropdown>
+                  </template>
+                </a-input>
               </div>
             </div>
             <div class="active-value-container">
