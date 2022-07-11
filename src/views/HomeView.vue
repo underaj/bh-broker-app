@@ -5,7 +5,6 @@ import {
   SwapOutlined,
 } from "@ant-design/icons-vue";
 import * as XLSX from "xlsx-js-style";
-import jsonExcel from "vue-json-excel3";
 import draggable from "vuedraggable";
 import axios from "axios";
 import qs from "qs";
@@ -16,7 +15,6 @@ export default {
     DownOutlined,
     DragOutlined,
     draggable,
-    jsonExcel,
   },
 
   data() {
@@ -178,7 +176,6 @@ export default {
         rowDataList.push(rowData);
       });
       this.rowData = rowDataList;
-      // this.showModal();
       const ws = XLSX.utils.json_to_sheet([]);
       XLSX.utils.sheet_add_aoa(
         ws,
@@ -238,10 +235,10 @@ export default {
           {{ `${option.payer}-${option.name}-${option.productName}` }}
         </a-select-option>
       </a-select>
-      <a-button type="primary" style="margin-left: 2px" @click="getDetails"
+      <a-button type="primary" style="margin-left: 8px" @click="getDetails"
         >获取计划信息</a-button
       >
-      <a-button type="primary" class="export-button" @click="exportExcel"
+      <a-button type="primary" class="export-button" @click="showModal"
         >导出列表</a-button
       >
     </div>
@@ -338,14 +335,7 @@ export default {
           <a-button style="margin-right: 8px" @click="visible = false"
             >取消</a-button
           >
-          <json-excel
-            :data="rowData"
-            :header="header"
-            name="保险医疗计划"
-            type="xls"
-          >
-            <a-button type="primary">确定下载</a-button>
-          </json-excel>
+          <a-button type="primary" @click="exportExcel">确定下载</a-button>
         </div>
       </div>
     </a-modal>
