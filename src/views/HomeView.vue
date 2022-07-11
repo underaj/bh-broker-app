@@ -24,6 +24,8 @@ export default {
       final: {},
       header: [],
       rowData: [],
+      newRowName: "",
+      newRowNameError: "",
     };
   },
   mounted() {
@@ -86,6 +88,20 @@ export default {
           this.answerList = answerList;
           this.final = final;
         });
+    },
+    addNewRow() {
+      if (this.newRowName) {
+        this.newRowNameError = "";
+        const newValue = {
+          name: this.newRowName,
+          values: [],
+          active: true,
+        };
+        this.selectionList = [...this.selectionList, newValue];
+        this.newRowName = "";
+      } else {
+        this.newRowNameError = "请输入有效列行名";
+      }
     },
     checkIfHaveValue(item, plan) {
       let show = false;
@@ -202,6 +218,21 @@ export default {
           </div>
         </template>
       </draggable>
+      <div v-if="selectionList.length > 0">
+        <a-input
+          :style="{
+            width: '190px',
+            padding: '2px 2px 2px 11px',
+            'margin-right': '12px',
+          }"
+          placeholder="添加列行"
+          v-model:value="newRowName"
+        />
+        <a-button type="primary" size="small" @click="addNewRow">
+          添加
+        </a-button>
+        <p class="new-row-name-error">{{ newRowNameError }}</p>
+      </div>
     </div>
     <a-modal
       ref="modalRef"
@@ -265,6 +296,7 @@ export default {
 }
 .content-container {
   margin-left: 24px;
+  padding-bottom: 48px;
 }
 .value-container {
   display: flex;
@@ -287,5 +319,8 @@ export default {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+}
+.new-row-name-error {
+  color: red;
 }
 </style>
