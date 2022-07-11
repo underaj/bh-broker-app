@@ -1,5 +1,10 @@
 <script>
-import { DragOutlined, DownOutlined } from "@ant-design/icons-vue";
+import {
+  DragOutlined,
+  DownOutlined,
+  SwapOutlined,
+} from "@ant-design/icons-vue";
+import * as XLSX from "xlsx-js-style";
 import jsonExcel from "vue-json-excel3";
 import draggable from "vuedraggable";
 import axios from "axios";
@@ -7,6 +12,7 @@ import qs from "qs";
 
 export default {
   components: {
+    SwapOutlined,
     DownOutlined,
     DragOutlined,
     draggable,
@@ -113,24 +119,99 @@ export default {
       return show;
     },
     exportExcel() {
-      const header = ["保险医疗计划"];
-      const rowData = [];
-      this.selectionList.forEach((valueItem) => {
-        if (valueItem.active) {
-          const row = {
-            " ": valueItem.name,
-          };
-          this.chosenPlan.forEach((plan) => {
-            row[`${plan.name} - ${plan.productName}`] =
-              this.final[plan.id][valueItem.name];
-          });
-          rowData.push(row);
-        }
+      const rowDataList = [];
+      const merges = {};
+      const mergesData = [];
+      const filteredSelectionList = this.selectionList.filter((item) => {
+        return item.active;
       });
-      console.log("here", rowData);
-      this.header = header;
-      this.rowData = rowData;
-      this.showModal();
+      mergesData.push({
+        s: { r: 0, c: 0 },
+        e: { r: 0, c: this.chosenPlan.length },
+      });
+      rowDataList.push([
+        " ",
+        ...this.chosenPlan.map((plan) => {
+          return {
+            v: `${plan.name} - ${plan.productName}`,
+            t: "s",
+            s: {
+              alignment: { horizontal: "center" },
+              font: { sz: 12, bold: true, name: "Cambria" },
+            },
+          };
+        }),
+      ]);
+      filteredSelectionList.forEach((valueItem, row) => {
+        const rowData = [
+          {
+            v: valueItem.name,
+            t: "s",
+            s: {
+              font: { bold: true, sz: 12, wrapText: true, name: "Cambria" },
+            },
+          },
+        ];
+        this.chosenPlan.forEach((plan, col) => {
+          const currentValue = this.final[plan.id][valueItem.name];
+          const lastValue = filteredSelectionList[row - 1]
+            ? this.final[plan.id][filteredSelectionList[row - 1].name]
+            : null;
+          const nextValue = filteredSelectionList[row + 1]
+            ? this.final[plan.id][filteredSelectionList[row + 1].name]
+            : null;
+          if (nextValue === currentValue) {
+            if (!merges[col + 1]) {
+              merges[col + 1] = { s: { r: row + 2, c: col + 1 } };
+            }
+          } else if (lastValue === currentValue) {
+            merges[col + 1].e = { r: row + 2, c: col + 1 };
+            mergesData.push(merges[col + 1]);
+            merges[col + 1] = null;
+          }
+          rowData.push({
+            v: currentValue,
+            t: "s",
+            s: { alignment: { vertical: "center", wrapText: true } },
+          });
+        });
+        rowDataList.push(rowData);
+      });
+      this.rowData = rowDataList;
+      // this.showModal();
+      const ws = XLSX.utils.json_to_sheet([]);
+      XLSX.utils.sheet_add_aoa(
+        ws,
+        [
+          [
+            {
+              v: "保险医疗计划",
+              t: "s",
+              s: {
+                alignment: { horizontal: "center", vertical: "center" },
+                font: { sz: 16, bold: true, name: "Cambria" },
+              },
+            },
+          ],
+        ],
+        {
+          origin: "A1",
+        }
+      );
+      XLSX.utils.sheet_add_aoa(ws, rowDataList, {
+        origin: "A2",
+      });
+      ws["!merges"] = mergesData;
+      ws["!rows"] = [{ hpt: 30 }];
+      ws["!cols"] = [
+        { wch: 40 },
+        ...this.chosenPlan.map(() => {
+          return { wch: 30 };
+        }),
+      ];
+      const myWorkBook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(myWorkBook, ws, "Sheet1");
+      XLSX.writeFile(myWorkBook, "保险医疗计划.xlsx");
     },
   },
 };
@@ -165,9 +246,19 @@ export default {
       >
     </div>
     <div class="title-container">
-      <div class="title-item" v-for="(item, i) in chosenPlan" :key="i">
-        {{ `${item.name} - ${item.productName}` }}
-      </div>
+      <draggable
+        v-model="chosenPlan"
+        item-key="name"
+        handle=".handle"
+        class="title-inner-container"
+      >
+        <template #item="{ element }">
+          <div class="title-item">
+            <swap-outlined class="handle" />
+            {{ `${element.name} - ${element.productName}` }}
+          </div>
+        </template>
+      </draggable>
       <div v-if="chosenPlan.length > 0" class="active-title-container">
         是否显示
       </div>
@@ -281,6 +372,10 @@ export default {
   display: flex;
   flex-direction: row;
   margin-left: 254px;
+}
+.title-inner-container {
+  display: flex;
+  flex-direction: row;
 }
 .title-item {
   width: 200px;
