@@ -30,6 +30,7 @@ export default {
       rowData: [],
       newRowName: "",
       newRowNameError: "",
+      mode: "",
     };
   },
   mounted() {
@@ -39,7 +40,8 @@ export default {
     setSelected(value, planId, selectionName) {
       this.final[planId][selectionName] = value;
     },
-    showModal() {
+    showModal(mode) {
+      this.mode = mode;
       this.visible = true;
     },
     getPlans() {
@@ -115,6 +117,40 @@ export default {
         }
       });
       return show;
+    },
+    saveAnswers() {
+      const postData = [];
+      this.selectionList.forEach(({ name }) => {
+        this.chosenPlan.forEach(({ id }) => {
+          const answer = this.final[id][name];
+          if (answer) {
+            if (this.answerList[name][id].indexOf(answer) > -1) {
+              console.log("answer exists");
+            } else {
+              postData.push({
+                planId: id,
+                name,
+                value: answer,
+                seq: this.answerList[name][id].length,
+              });
+            }
+          }
+        });
+      });
+      if (postData.length > 0) {
+        axios({
+          url: "api/plan/items",
+          method: "post",
+          data: { items: postData },
+          header: {
+            "Content-Type": "application/json",
+          },
+        }).then(() => {
+          this.visible = false;
+        });
+      } else {
+        this.visible = false;
+      }
     },
     exportExcel() {
       const rowDataList = [];
@@ -209,6 +245,7 @@ export default {
       const myWorkBook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(myWorkBook, ws, "Sheet1");
       XLSX.writeFile(myWorkBook, "保险医疗计划.xlsx");
+      this.visible = false;
     },
   },
 };
@@ -238,8 +275,17 @@ export default {
       <a-button type="primary" style="margin-left: 8px" @click="getDetails"
         >获取计划信息</a-button
       >
-      <a-button type="primary" class="export-button" @click="showModal"
+      <a-button
+        type="primary"
+        class="export-button"
+        @click="() => showModal('EXPORT')"
         >导出列表</a-button
+      >
+      <a-button
+        type="primary"
+        class="export-button"
+        @click="() => showModal('SAVE')"
+        >储存选项</a-button
       >
     </div>
     <div class="title-container">
@@ -330,12 +376,22 @@ export default {
       :footer="null"
     >
       <div class="modal-container">
-        <p>确定下载Excel？</p>
+        <p v-if="mode === 'EXPORT'">确定下载Excel？</p>
+        <p v-if="mode === 'SAVE'">确定储存选项？</p>
         <div class="modal-button-row">
-          <a-button style="margin-right: 8px" @click="visible = false"
-            >取消</a-button
+          <a-button style="margin-right: 8px" @click="visible = false">
+            取消
+          </a-button>
+          <a-button
+            v-if="mode === 'EXPORT'"
+            type="primary"
+            @click="exportExcel"
           >
-          <a-button type="primary" @click="exportExcel">确定下载</a-button>
+            确定下载
+          </a-button>
+          <a-button v-if="mode === 'SAVE'" type="primary" @click="saveAnswers">
+            确定储存
+          </a-button>
         </div>
       </div>
     </a-modal>
