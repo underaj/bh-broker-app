@@ -9,6 +9,12 @@ import draggable from "vuedraggable";
 import axios from "axios";
 import qs from "qs";
 
+const products = [
+  { name: "高端医疗产品", id: 0 },
+  { name: "含孕产", id: 1 },
+  { name: "高端医疗出单规则", id: 2 },
+];
+
 export default {
   components: {
     SwapOutlined,
@@ -19,6 +25,8 @@ export default {
 
   data() {
     return {
+      productList: products,
+      chosenProduct: [],
       visible: false,
       planList: [],
       plan: [],
@@ -256,6 +264,22 @@ export default {
     <div class="header">保险医疗计划方案模板</div>
     <div class="plan-select-container">
       <div>计划</div>
+      <div style="margin: 12px 0 24px">
+        <a-select
+          :style="{ width: '400px' }"
+          v-model:value="chosenProduct"
+          mode="multiple"
+          placeholder="请选择产品"
+        >
+          <a-select-option
+            v-for="(option, x) in productList"
+            :key="`${x}`"
+            :value="option.id"
+          >
+            {{ `${option.name}` }}
+          </a-select-option>
+        </a-select>
+      </div>
       <a-select
         :style="{ width: '400px' }"
         v-model:value="plan"
