@@ -10,7 +10,7 @@ import { RouterView } from "vue-router";
 @import "@/assets/base.css";
 
 #app {
-  max-width: 1280px;
+  /* max-width: 1280px; */
   font-weight: normal;
 }
 

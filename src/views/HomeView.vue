@@ -56,7 +56,7 @@ export default {
       this.visible = true;
     },
     getPlans() {
-      axios.get("/api/plans").then((res) => {
+      axios.get("/api/queryPlans").then((res) => {
         this.planList = res.data.data.plans;
       });
     },
@@ -69,7 +69,7 @@ export default {
         planId.push(this.plan[key]);
       });
       axios
-        .get("api/plan/items", {
+        .get("/api/queryItems", {
           params: { planId },
           paramsSerializer: function (params) {
             return qs.stringify(params, { arrayFormat: "repeat" });
@@ -151,7 +151,7 @@ export default {
       });
       if (postData.length > 0) {
         axios({
-          url: "api/plan/items",
+          url: "/api/plan/items",
           method: "post",
           data: { items: postData },
           header: {
@@ -278,131 +278,137 @@ export default {
           }}</a-menu-item>
         </a-menu>
       </div>
-
-      <a-tabs v-model:activeKey="activeKey">
+      <a-tabs  v-model:activeKey="activeKey">
         <a-tab-pane tab="Tab 1">
-          <div class="plan-select-container">
-            <a-select
-              :style="{ width: '400px' }"
-              v-model:value="plan"
-              show-search
-              mode="multiple"
-              placeholder="请选择计划"
-              :filter-option="filterOption"
-            >
-              <a-select-option
-                v-for="(option, x) in planList"
-                :key="`${option.payer}-${option.name}-${option.productName}-${x}`"
-                :value="option.id"
+          <div class="scroll-container">
+            <div class="plan-select-container">
+              <a-select
+                :style="{ width: '560px' }"
+                v-model:value="plan"
+                show-search
+                mode="multiple"
+                placeholder="请选择计划"
+                :filter-option="filterOption"
               >
-                {{ `${option.payer}-${option.name}-${option.productName}` }}
-              </a-select-option>
-            </a-select>
-            <a-button
-              type="primary"
-              style="margin-left: 8px"
-              @click="getDetails"
-              >获取计划信息</a-button
-            >
-            <a-button
-              type="primary"
-              class="export-button"
-              @click="() => showModal('EXPORT')"
-              >导出列表</a-button
-            >
-            <a-button
-              type="primary"
-              class="export-button"
-              @click="() => showModal('SAVE')"
-              >储存选项</a-button
-            >
-          </div>
-          <div class="title-container">
-            <draggable
-              v-model="chosenPlan"
-              item-key="name"
-              handle=".handle"
-              class="title-inner-container"
-            >
-              <template #item="{ element }">
-                <div class="title-item">
-                  <swap-outlined class="handle" />
-                  {{ `${element.name} - ${element.productName}` }}
-                </div>
-              </template>
-            </draggable>
-            <div v-if="chosenPlan.length > 0" class="active-title-container">
-              是否显示
+                <a-select-option
+                  v-for="(option, x) in planList"
+                  :key="`${option.payer}-${option.name}-${option.productName}-${x}`"
+                  :value="option.id"
+                >
+                  {{ `${option.payer}-${option.name}-${option.productName}` }}
+                </a-select-option>
+              </a-select>
+              <a-button
+                type="primary"
+                style="margin-left: 8px"
+                @click="getDetails"
+                >获取计划信息</a-button
+              >
+              <a-button
+                type="primary"
+                class="export-button"
+                @click="() => showModal('EXPORT')"
+                >导出列表</a-button
+              >
+              <a-button
+                type="primary"
+                class="export-button"
+                @click="() => showModal('SAVE')"
+                >储存选项</a-button
+              >
             </div>
-          </div>
-          <div class="content-container">
-            <draggable v-model="selectionList" item-key="name" handle=".handle">
-              <template #item="{ element }">
-                <div class="value-container">
-                  <drag-outlined class="handle" />
-                  <div class="value-title">{{ element.name }}</div>
-                  <div
-                    class="value-select-container"
-                    v-for="(plan, y) in chosenPlan"
-                    :key="y"
-                  >
-                    <div>
-                      <a-input
-                        :style="{
-                          width: '190px',
-                          padding: '2px 2px 2px 11px',
-                        }"
-                        v-model:value="final[plan.id][element.name]"
-                      >
-                        <template #suffix>
-                          <a-dropdown>
-                            <template #overlay>
-                              <a-menu
-                                @click="
-                                  ({ key }) =>
-                                    setSelected(key, plan.id, element.name)
-                                "
-                              >
-                                <a-menu-item
-                                  v-for="value in answerList[element.name][
-                                    plan.id
-                                  ]"
-                                  :key="value"
+            <div class="title-container">
+              <draggable
+                v-model="chosenPlan"
+                item-key="name"
+                handle=".handle"
+                class="title-inner-container"
+              >
+                <template #item="{ element }">
+                  <div class="title-item">
+                    <swap-outlined class="handle" />
+                    {{ `${element.name} - ${element.productName}` }}
+                  </div>
+                </template>
+              </draggable>
+              <div v-if="chosenPlan.length > 0" class="active-title-container">
+                是否显示
+              </div>
+            </div>
+            <div class="content-container">
+              <draggable
+                v-model="selectionList"
+                item-key="name"
+                handle=".handle"
+              >
+                <template #item="{ element }">
+                  <div class="value-container">
+                    <drag-outlined class="handle" />
+                    <div class="value-title">{{ element.name }}</div>
+                    <div
+                      class="value-select-container"
+                      v-for="(plan, y) in chosenPlan"
+                      :key="y"
+                    >
+                      <div>
+                        <a-input
+                          :style="{
+                            width: '190px',
+                            padding: '2px 2px 2px 11px',
+                          }"
+                          v-model:value="final[plan.id][element.name]"
+                        >
+                          <template #suffix>
+                            <a-dropdown>
+                              <template #overlay>
+                                <a-menu
+                                  @click="
+                                    ({ key }) =>
+                                      setSelected(key, plan.id, element.name)
+                                  "
                                 >
-                                  {{ value }}
-                                </a-menu-item>
-                              </a-menu>
-                            </template>
-                            <a-button type="text">
-                              <DownOutlined />
-                            </a-button>
-                          </a-dropdown>
-                        </template>
-                      </a-input>
+                                  <a-menu-item
+                                    v-for="value in answerList[element.name][
+                                      plan.id
+                                    ]"
+                                    :key="value"
+                                  >
+                                    {{ value }}
+                                  </a-menu-item>
+                                </a-menu>
+                              </template>
+                              <a-button type="text">
+                                <DownOutlined />
+                              </a-button>
+                            </a-dropdown>
+                          </template>
+                        </a-input>
+                      </div>
+                    </div>
+                    <div class="active-value-container">
+                      <a-checkbox v-model:checked="element.active"></a-checkbox>
                     </div>
                   </div>
-                  <div class="active-value-container">
-                    <a-checkbox v-model:checked="element.active"></a-checkbox>
-                  </div>
-                </div>
-              </template>
-            </draggable>
-            <div v-if="selectionList.length > 0">
-              <a-input
-                :style="{
-                  width: '190px',
-                  padding: '2px 2px 2px 11px',
-                  'margin-right': '12px',
-                }"
-                placeholder="添加列行"
-                v-model:value="newRowName"
-              />
-              <a-button type="primary" size="small" @click="addNewRow">
-                添加
-              </a-button>
-              <p class="new-row-name-error">{{ newRowNameError }}</p>
+                </template>
+              </draggable>
+              <div v-if="selectionList.length > 0">
+                <a-input
+                  :style="{
+                    width: '190px',
+                    padding: '2px 2px 2px 11px',
+                    'margin-right': '12px',
+                  }"
+                  placeholder="添加列行"
+                  v-model:value="newRowName"
+                />
+                <a-button type="primary" size="small" @click="addNewRow">
+                  添加
+                </a-button>
+                <p class="new-row-name-error">{{ newRowNameError }}</p>
+              </div>
             </div>
           </div>
+
           <a-modal
             ref="modalRef"
             v-model:visible="visible"
@@ -465,6 +471,10 @@ export default {
   font-weight: 500;
   margin: 12px;
 }
+.scroll-container {
+  overflow-y: auto;
+  width: 100%;
+}
 .plan-select-container {
   padding: 0 24px 24px;
 }
@@ -474,21 +484,24 @@ export default {
 .title-container {
   display: flex;
   flex-direction: row;
-  margin-left: 254px;
+  margin-left: 272px;
+  height: 30px;
 }
 .title-inner-container {
   display: flex;
   flex-direction: row;
 }
 .title-item {
-  width: 200px;
-  text-align: center;
+  width: 212px;
+  text-align: left;
 }
 .active-title-container {
+  min-width: 100px;
   width: 100px;
   text-align: center;
 }
 .active-value-container {
+  min-width: 100px;
   width: 70px;
   text-align: center;
 }
@@ -503,12 +516,17 @@ export default {
   margin: 18px 0;
 }
 .value-title {
+  min-width: 200px;
+  max-width: 200px;
   width: 200px;
   text-align: left;
   margin: 0 16px;
 }
 .value-select-container {
+  min-width: 200px;
+  max-width: 200px;
   width: 200px;
+  margin: 0 12px 0 0;
 }
 .modal-container {
   margin: 24px 24px 6px 24px;
