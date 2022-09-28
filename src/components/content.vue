@@ -23,6 +23,7 @@ export default {
       plan: [],
       chosenPlan: [],
       selectionList: [],
+      listWithParentId: [],
       answerList: {},
       final: {},
       mergeAnswerList: {},
@@ -41,6 +42,9 @@ export default {
   methods: {
     setSelected(value, planId, selectionName) {
       this.final[planId][selectionName] = value;
+    },
+    setMergeSelected(value, planId, mergeId) {
+      this.mergeFinal[planId][mergeId] = value;
     },
     showModal(mode) {
       this.mode = mode;
@@ -81,8 +85,8 @@ export default {
               if (item.mergeIds && item.mergeIds[plan.id]) {
                 if (!mergeFinal[plan.id]) {
                   mergeFinal[plan.id] = {};
+                  mergeFinal[plan.id][item.mergeIds[plan.id]] = "";
                 }
-                mergeFinal[plan.id][item.mergeIds[plan.id]] = "";
               } else {
                 if (!final[plan.id]) {
                   final[plan.id] = {};
@@ -151,7 +155,7 @@ export default {
           this.final = final;
           this.mergeAnswerList = mergeAnswerList;
           this.mergeFinal = mergeFinal;
-          // console.log(this.answerList, this.final, this.listWithParentId, mergeAnswerList, mergeFinal);
+          console.log(this.answerList, this.final, this.listWithParentId, mergeAnswerList, mergeFinal);
         });
     },
     addNewRow() {
@@ -368,7 +372,7 @@ export default {
         <draggable v-model="selectionList" item-key="name" handle=".handle">
           <template #item="{ element }">
             <div class="selection-row">
-              <drag-outlined class="handle" />
+              <drag-outlined class="handle" style="margin-top: 8px" />
               <div class="value-title">{{ element.name }}</div>
               <div
                 class="input-container"
@@ -383,7 +387,9 @@ export default {
                   "
                   class="merge-value-column"
                 >
-                  <span class="merge-title">合并号：{{ element.mergeIds[plan.id] }}</span>
+                  <div class="merge-title">
+                    合并号：{{ element.mergeIds[plan.id] }}
+                  </div>
                   <a-input
                     :style="{
                       width: '190px',
@@ -399,7 +405,11 @@ export default {
                           <a-menu
                             @click="
                               ({ key }) =>
-                                setSelected(key, plan.id, element.name)
+                                setMergeSelected(
+                                  key,
+                                  plan.id,
+                                  element.mergeIds[plan.id]
+                                )
                             "
                           >
                             <a-menu-item
@@ -458,6 +468,117 @@ export default {
             </div>
           </template>
         </draggable>
+        <div
+          v-for="parentGroup in listWithParentId"
+          :key="parentGroup.parentId"
+        >
+          <div class="group-title">{{ parentGroup.name }}</div>
+          <draggable
+            v-model="parentGroup.selectionList"
+            item-key="name"
+            handle=".handle"
+          >
+            <template #item="{ element }">
+              <div class="selection-row">
+                <drag-outlined class="handle" style="margin-top: 8px" />
+                <div class="value-title">{{ element.name }}</div>
+                <div
+                  class="input-container"
+                  v-for="(plan, y) in chosenPlan"
+                  :key="y"
+                >
+                  <div
+                    v-if="
+                      element.mergeIds &&
+                      element.mergeIds[plan.id] &&
+                      mergeFinal[plan.id]
+                    "
+                    class="merge-value-column"
+                  >
+                    <div class="merge-title">
+                      合并号：{{ element.mergeIds[plan.id] }}
+                    </div>
+                    <a-input
+                      :style="{
+                        width: '190px',
+                        padding: '2px 2px 2px 11px',
+                      }"
+                      v-model:value="
+                        mergeFinal[plan.id][element.mergeIds[plan.id]]
+                      "
+                    >
+                      <template #suffix>
+                        <a-dropdown>
+                          <template #overlay>
+                            <a-menu
+                              @click="
+                                ({ key }) =>
+                                  setMergeSelected(
+                                    key,
+                                    plan.id,
+                                    element.mergeIds[plan.id]
+                                  )
+                              "
+                            >
+                              <a-menu-item
+                                v-for="value in mergeAnswerList[plan.id][
+                                  element.mergeIds[plan.id]
+                                ]"
+                                :key="value"
+                              >
+                                {{ value }}
+                              </a-menu-item>
+                            </a-menu>
+                          </template>
+                          <a-button type="text">
+                            <DownOutlined />
+                          </a-button>
+                        </a-dropdown>
+                      </template>
+                    </a-input>
+                  </div>
+                  <div class="value-column" v-else>
+                    <a-input
+                      :style="{
+                        width: '190px',
+                        padding: '2px 2px 2px 11px',
+                      }"
+                      v-model:value="final[plan.id][element.name]"
+                    >
+                      <template #suffix>
+                        <a-dropdown>
+                          <template #overlay>
+                            <a-menu
+                              @click="
+                                ({ key }) =>
+                                  setSelected(key, plan.id, element.name)
+                              "
+                            >
+                              <a-menu-item
+                                v-for="value in answerList[element.name][
+                                  plan.id
+                                ]"
+                                :key="value"
+                              >
+                                {{ value }}
+                              </a-menu-item>
+                            </a-menu>
+                          </template>
+                          <a-button type="text">
+                            <DownOutlined />
+                          </a-button>
+                        </a-dropdown>
+                      </template>
+                    </a-input>
+                  </div>
+                </div>
+                <div class="active-value-container">
+                  <a-checkbox v-model:checked="element.active"></a-checkbox>
+                </div>
+              </div>
+            </template>
+          </draggable>
+        </div>
         <div v-if="selectionList.length > 0">
           <a-input
             :style="{
@@ -520,7 +641,7 @@ export default {
 .title-container {
   display: flex;
   flex-direction: row;
-  margin-left: 272px;
+  margin-left: 282px;
   height: 30px;
 }
 .title-inner-container {
@@ -528,13 +649,14 @@ export default {
   flex-direction: row;
 }
 .title-item {
-  width: 212px;
+  width: 232px;
   text-align: left;
 }
 .active-title-container {
   min-width: 100px;
   width: 100px;
-  text-align: center;
+  padding-left: 12px;
+  /* text-align: center; */
 }
 .active-value-container {
   min-width: 100px;
@@ -551,12 +673,20 @@ export default {
   align-items: center;
   margin: 0;
 }
+.group-title {
+  font-weight: 500;
+  margin: 32px 0 18px 12px;
+  padding: 0 12px;
+  border-bottom: solid 1px black;
+
+  width: fit-content;
+}
 .value-title {
   min-width: 200px;
   max-width: 200px;
   width: 200px;
   text-align: left;
-  margin: 0 16px;
+  margin: 8px 16px 0;
 }
 .input-container {
   min-width: 220px;
@@ -569,12 +699,15 @@ export default {
   background-color: #add8e6;
   padding-left: 10px;
   margin-right: 10px;
+  padding-top: 2px;
 }
 .merge-title {
   font-size: 10px;
+  line-height: 1;
+  margin: 4px;
 }
 .value-column {
-  padding-top: 23px;
+  padding-top: 22px;
   height: 70px;
   padding-left: 10px;
   margin-right: 10px;
