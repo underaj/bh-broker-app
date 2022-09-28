@@ -25,6 +25,8 @@ export default {
       selectionList: [],
       answerList: {},
       final: {},
+      mergeAnswerList: {},
+      mergeFinal: {},
       header: [],
       rowData: [],
       newRowName: "",
@@ -66,34 +68,90 @@ export default {
         })
         .then((res) => {
           this.chosenPlan = res.data.data.plans;
-          this.selectionList = res.data.data.items;
+          this.selectionList = [];
+          this.listWithParentId = [];
+          const itemParents = res.data.data.itemParents;
           const final = {};
           const answerList = {};
-          this.selectionList.forEach((item, i) => {
-            this.selectionList[i].active = true;
+          const mergeFinal = {};
+          const mergeAnswerList = {};
+          res.data.data.items.forEach((item) => {
+            item.active = true;
             this.chosenPlan.forEach((plan) => {
-              if (!final[plan.id]) {
-                final[plan.id] = {};
+              if (item.mergeIds && item.mergeIds[plan.id]) {
+                if (!mergeFinal[plan.id]) {
+                  mergeFinal[plan.id] = {};
+                }
+                mergeFinal[plan.id][item.mergeIds[plan.id]] = "";
+              } else {
+                if (!final[plan.id]) {
+                  final[plan.id] = {};
+                }
+                final[plan.id][item.name] = "";
               }
-              final[plan.id][item.name] = "";
             });
             answerList[item.name] = {};
             item.values.forEach((valueItem) => {
               valueItem.planIds.forEach((id) => {
-                if (!final[id][item.name]) {
-                  final[id][item.name] = valueItem.value;
-                }
-                if (answerList[item.name][id]) {
-                  answerList[item.name][id].push(valueItem.value);
+                if (item.mergeIds && item.mergeIds[id]) {
+                  if (!mergeFinal[id][item.mergeIds[id]]) {
+                    mergeFinal[id][item.mergeIds[id]] = valueItem.value;
+                  }
+                  if (!mergeAnswerList[id]) {
+                    mergeAnswerList[id] = {};
+                  }
+                  if (mergeAnswerList[id][item.mergeIds[id]]) {
+                    mergeAnswerList[id][item.mergeIds[id]].push(
+                      valueItem.value
+                    );
+                  } else {
+                    mergeAnswerList[id][item.mergeIds[id]] = [valueItem.value];
+                  }
                 } else {
-                  answerList[item.name][id] = [valueItem.value];
+                  if (!final[id][item.name]) {
+                    final[id][item.name] = valueItem.value;
+                  }
+                  if (answerList[item.name][id]) {
+                    answerList[item.name][id].push(valueItem.value);
+                  } else {
+                    answerList[item.name][id] = [valueItem.value];
+                  }
                 }
               });
             });
+            if (item.parentId) {
+              let newParentItem = {};
+              this.listWithParentId.forEach((parentItem) => {
+                if (parentItem.parentId === item.parentId) {
+                  newParentItem = parentItem;
+                }
+              });
+
+              if (newParentItem.parentId) {
+                newParentItem.selectionList.push(item);
+              } else {
+                for (let x = 0; x < itemParents.length; x++) {
+                  if (itemParents[x].id === item.parentId) {
+                    newParentItem = {
+                      parentId: itemParents[x].id,
+                      name: itemParents[x].name,
+                      selectionList: [item],
+                    };
+                    this.listWithParentId.push(newParentItem);
+                    break;
+                  }
+                }
+              }
+            } else {
+              this.selectionList.push(item);
+            }
           });
+
           this.answerList = answerList;
           this.final = final;
-          console.log(this.answerList, this.final);
+          this.mergeAnswerList = mergeAnswerList;
+          this.mergeFinal = mergeFinal;
+          // console.log(this.answerList, this.final, this.listWithParentId, mergeAnswerList, mergeFinal);
         });
     },
     addNewRow() {
@@ -309,15 +367,59 @@ export default {
       <div class="content-container">
         <draggable v-model="selectionList" item-key="name" handle=".handle">
           <template #item="{ element }">
-            <div class="value-container">
+            <div class="selection-row">
               <drag-outlined class="handle" />
               <div class="value-title">{{ element.name }}</div>
               <div
-                class="value-select-container"
+                class="input-container"
                 v-for="(plan, y) in chosenPlan"
                 :key="y"
               >
-                <div>
+                <div
+                  v-if="
+                    element.mergeIds &&
+                    element.mergeIds[plan.id] &&
+                    mergeFinal[plan.id]
+                  "
+                  class="merge-value-column"
+                >
+                  <span class="merge-title">合并号：{{ element.mergeIds[plan.id] }}</span>
+                  <a-input
+                    :style="{
+                      width: '190px',
+                      padding: '2px 2px 2px 11px',
+                    }"
+                    v-model:value="
+                      mergeFinal[plan.id][element.mergeIds[plan.id]]
+                    "
+                  >
+                    <template #suffix>
+                      <a-dropdown>
+                        <template #overlay>
+                          <a-menu
+                            @click="
+                              ({ key }) =>
+                                setSelected(key, plan.id, element.name)
+                            "
+                          >
+                            <a-menu-item
+                              v-for="value in mergeAnswerList[plan.id][
+                                element.mergeIds[plan.id]
+                              ]"
+                              :key="value"
+                            >
+                              {{ value }}
+                            </a-menu-item>
+                          </a-menu>
+                        </template>
+                        <a-button type="text">
+                          <DownOutlined />
+                        </a-button>
+                      </a-dropdown>
+                    </template>
+                  </a-input>
+                </div>
+                <div class="value-column" v-else>
                   <a-input
                     :style="{
                       width: '190px',
@@ -443,11 +545,11 @@ export default {
   margin-left: 24px;
   padding-bottom: 48px;
 }
-.value-container {
+.selection-row {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin: 18px 0;
+  margin: 0;
 }
 .value-title {
   min-width: 200px;
@@ -456,11 +558,26 @@ export default {
   text-align: left;
   margin: 0 16px;
 }
-.value-select-container {
-  min-width: 200px;
-  max-width: 200px;
-  width: 200px;
+.input-container {
+  min-width: 220px;
+  max-width: 220px;
+  width: 220px;
   margin: 0 12px 0 0;
+}
+.merge-value-column {
+  height: 70px;
+  background-color: #add8e6;
+  padding-left: 10px;
+  margin-right: 10px;
+}
+.merge-title {
+  font-size: 10px;
+}
+.value-column {
+  padding-top: 23px;
+  height: 70px;
+  padding-left: 10px;
+  margin-right: 10px;
 }
 .modal-container {
   margin: 24px 24px 6px 24px;
