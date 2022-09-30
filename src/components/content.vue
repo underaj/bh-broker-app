@@ -28,12 +28,9 @@ export default {
       final: {},
       mergeAnswerList: {},
       mergeFinal: {},
-      header: [],
-      rowData: [],
       newRowName: "",
       newRowNameError: "",
       mode: "",
-      activeKey: 0,
     };
   },
   mounted() {
@@ -155,7 +152,13 @@ export default {
           this.final = final;
           this.mergeAnswerList = mergeAnswerList;
           this.mergeFinal = mergeFinal;
-          console.log(this.answerList, this.final, this.listWithParentId, mergeAnswerList, mergeFinal);
+          console.log(
+            this.answerList,
+            this.final,
+            this.listWithParentId,
+            mergeAnswerList,
+            mergeFinal
+          );
         });
     },
     addNewRow() {
@@ -219,9 +222,7 @@ export default {
       const rowDataList = [];
       const merges = {};
       const mergesData = [];
-      const filteredSelectionList = this.selectionList.filter((item) => {
-        return item.active;
-      });
+
       mergesData.push({
         s: { r: 0, c: 0 },
         e: { r: 0, c: this.chosenPlan.length },
@@ -239,42 +240,109 @@ export default {
           };
         }),
       ]);
-      filteredSelectionList.forEach((valueItem, row) => {
-        const rowData = [
-          {
-            v: valueItem.name,
-            t: "s",
-            s: {
-              font: { bold: true, sz: 12, wrapText: true, name: "Cambria" },
+      const dataProcess = (selectionList, parentName) => {
+        if (parentName) {
+          rowDataList.push([
+            {
+              v: parentName,
+              t: "s",
+              s: {
+                alignment: { horizontal: "center" },
+                font: { bold: true, sz: 12, wrapText: true, name: "Cambria" },
+              },
             },
-          },
-        ];
-        this.chosenPlan.forEach((plan, col) => {
-          const currentValue = this.final[plan.id][valueItem.name];
-          const lastValue = filteredSelectionList[row - 1]
-            ? this.final[plan.id][filteredSelectionList[row - 1].name]
-            : null;
-          const nextValue = filteredSelectionList[row + 1]
-            ? this.final[plan.id][filteredSelectionList[row + 1].name]
-            : null;
-          if (nextValue === currentValue) {
-            if (!merges[col + 1]) {
-              merges[col + 1] = { s: { r: row + 2, c: col + 1 } };
-            }
-          } else if (lastValue === currentValue) {
-            merges[col + 1].e = { r: row + 2, c: col + 1 };
-            mergesData.push(merges[col + 1]);
-            merges[col + 1] = null;
-          }
-          rowData.push({
-            v: currentValue,
-            t: "s",
-            s: { alignment: { vertical: "center", wrapText: true } },
+          ]);
+          mergesData.push({
+            s: { r: rowDataList.length, c: 0 },
+            e: { r: rowDataList.length, c: this.chosenPlan.length },
           });
+        }
+        const filteredSelectionList = selectionList.filter((item) => {
+          return item.active;
         });
-        rowDataList.push(rowData);
+        filteredSelectionList.forEach((valueItem, row) => {
+          const rowData = [
+            {
+              v: valueItem.name,
+              t: "s",
+              s: {
+                font: { bold: true, sz: 12, wrapText: true, name: "Cambria" },
+              },
+            },
+          ];
+          this.chosenPlan.forEach((plan, col) => {
+            let currentValue = this.final[plan.id][valueItem.name];
+            let currentMergeId = null;
+            let nextMergeId = null;
+            let previousMergeId = null;
+            if (valueItem.mergeIds && valueItem.mergeIds[plan.id]) {
+              currentMergeId = valueItem.mergeIds[plan.id];
+              currentValue =
+                this.mergeFinal[plan.id][valueItem.mergeIds[plan.id]];
+            }
+            if (
+              filteredSelectionList[row + 1] &&
+              filteredSelectionList[row + 1].mergeIds &&
+              filteredSelectionList[row + 1].mergeIds[plan.id]
+            ) {
+              nextMergeId = filteredSelectionList[row + 1].mergeIds[plan.id];
+            }
+            if (
+              filteredSelectionList[row - 1] &&
+              filteredSelectionList[row - 1].mergeIds &&
+              filteredSelectionList[row - 1].mergeIds[plan.id]
+            ) {
+              previousMergeId =
+                filteredSelectionList[row - 1].mergeIds[plan.id];
+            }
+
+            if (
+              nextMergeId &&
+              currentMergeId &&
+              nextMergeId === currentMergeId
+            ) {
+              if (!merges[col + 1]) {
+                merges[col + 1] = {
+                  s: { r: rowDataList.length + 1, c: col + 1 },
+                };
+              }
+            } else if (
+              previousMergeId &&
+              currentMergeId &&
+              previousMergeId === currentMergeId
+            ) {
+              merges[col + 1].e = { r: rowDataList.length + 1, c: col + 1 };
+              mergesData.push(merges[col + 1]);
+              merges[col + 1] = null;
+            }
+            // const lastValue = filteredSelectionList[row - 1]
+            //   ? this.final[plan.id][filteredSelectionList[row - 1].name]
+            //   : null;
+            // const nextValue = filteredSelectionList[row + 1]
+            //   ? this.final[plan.id][filteredSelectionList[row + 1].name]
+            //   : null;
+            // if (nextValue === currentValue) {
+            //   if (!merges[col + 1]) {
+            //     merges[col + 1] = { s: { r: row + 2, c: col + 1 } };
+            //   }
+            // } else if (lastValue === currentValue) {
+            //   merges[col + 1].e = { r: row + 2, c: col + 1 };
+            //   mergesData.push(merges[col + 1]);
+            //   merges[col + 1] = null;
+            // }
+            rowData.push({
+              v: currentValue,
+              t: "s",
+              s: { alignment: { vertical: "center", wrapText: true } },
+            });
+          });
+          rowDataList.push(rowData);
+        });
+      };
+      dataProcess(this.selectionList);
+      this.listWithParentId.forEach((item) => {
+        dataProcess(item.selectionList, item.name);
       });
-      this.rowData = rowDataList;
       const ws = XLSX.utils.json_to_sheet([]);
       XLSX.utils.sheet_add_aoa(
         ws,
@@ -305,6 +373,7 @@ export default {
           return { wch: 30 };
         }),
       ];
+      console.log("here", mergesData, rowDataList);
       const myWorkBook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(myWorkBook, ws, "Sheet1");
       XLSX.writeFile(myWorkBook, "保险医疗计划.xlsx");
