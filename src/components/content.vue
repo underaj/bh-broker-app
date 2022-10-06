@@ -10,6 +10,11 @@ import axios from "axios";
 import qs from "qs";
 
 export default {
+  props: {
+    typeId: {
+      type: String,
+    },
+  },
   components: {
     SwapOutlined,
     DownOutlined,
@@ -48,9 +53,11 @@ export default {
       this.visible = true;
     },
     getPlans() {
-      axios.get("/api/queryPlans").then((res) => {
-        this.planList = res.data.data.plans;
-      });
+      axios
+        .get("/api/queryPlans", { params: { typeId: this.typeId } })
+        .then((res) => {
+          this.planList = res.data.data.plans;
+        });
     },
     filterOption(input, option) {
       return option.key.toLowerCase().indexOf(input.toLowerCase()) >= 0;

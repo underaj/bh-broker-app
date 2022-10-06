@@ -4,6 +4,7 @@ const products = [
   { name: "高端医疗产品", id: 0, checked: false },
   { name: "含孕产", id: 1, checked: false },
   { name: "高端医疗出单规则", id: 2, checked: false },
+  { name: "增额寿基础规则", id: 3, checked: false },
 ];
 
 export default {
@@ -60,7 +61,7 @@ export default {
           :key="pane.id"
           :tab="pane.name"
         >
-          <ContentView />
+          <ContentView :typeId="pane.id" />
         </a-tab-pane>
       </a-tabs>
     </div>
