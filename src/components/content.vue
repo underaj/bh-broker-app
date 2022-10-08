@@ -407,7 +407,11 @@ export default {
             :key="`${option.payer}-${option.name}-${option.productName}-${x}`"
             :value="option.id"
           >
-            {{ `${option.payer}-${option.name}-${option.productName}` }}
+            {{
+              `${option.payer}${option.name ? `-${option.name}` : ""}${
+                option.productName ? `-${option.productName}` : ""
+              }`
+            }}
           </a-select-option>
         </a-select>
         <a-button type="primary" style="margin-left: 8px" @click="getDetails"
@@ -436,7 +440,11 @@ export default {
           <template #item="{ element }">
             <div class="title-item">
               <swap-outlined class="handle" />
-              {{ `${element.name} - ${element.productName}` }}
+              {{
+                `${element.payer}${element.name ? `-${element.name}` : ""}${
+                  element.productName ? `-${element.productName}` : ""
+                }`
+              }}
             </div>
           </template>
         </draggable>
