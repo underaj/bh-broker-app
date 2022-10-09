@@ -1,6 +1,6 @@
 <script>
 import {
-  DragOutlined,
+  // DragOutlined,
   DownOutlined,
   SwapOutlined,
 } from "@ant-design/icons-vue";
@@ -14,11 +14,14 @@ export default {
     typeId: {
       type: String,
     },
+    productName: {
+      type: String,
+    },
   },
   components: {
     SwapOutlined,
     DownOutlined,
-    DragOutlined,
+    // DragOutlined,
     draggable,
   },
   data() {
@@ -456,7 +459,7 @@ export default {
         <draggable v-model="selectionList" item-key="name" handle=".handle">
           <template #item="{ element }">
             <div class="selection-row">
-              <drag-outlined class="handle" style="margin-top: 8px" />
+              <!-- <drag-outlined class="handle" style="margin-top: 8px" /> -->
               <div class="value-title">{{ element.name }}</div>
               <div
                 class="input-container"
@@ -564,7 +567,7 @@ export default {
           >
             <template #item="{ element }">
               <div class="selection-row">
-                <drag-outlined class="handle" style="margin-top: 8px" />
+                <!-- <drag-outlined class="handle" style="margin-top: 8px" /> -->
                 <div class="value-title">{{ element.name }}</div>
                 <div
                   class="input-container"
@@ -725,7 +728,7 @@ export default {
 .title-container {
   display: flex;
   flex-direction: row;
-  margin-left: 282px;
+  margin-left: 266px;
   height: 30px;
 }
 .title-inner-container {
