@@ -173,7 +173,7 @@ export default {
             [
               [
                 {
-                  v: "保险医疗计划",
+                  v: obj.productName,
                   t: "s",
                   s: {
                     alignment: { horizontal: "center", vertical: "center" },
@@ -227,7 +227,7 @@ export default {
             class="button"
             @click="() => exportExcel('EXPORT')"
           >
-            导出列表
+            导出所有列表
           </a-button>
         </div>
       </div>
@@ -256,7 +256,7 @@ export default {
   flex-direction: row;
 }
 .side-bar {
-  width: 20vw;
+  width: 240px;
   max-width: 240px;
   height: 100vh;
   border-right: 1px solid #f0f0f0;
@@ -283,5 +283,8 @@ export default {
   font-size: 18px;
   font-weight: 500;
   margin: 12px;
+}
+.ant-tabs-nav {
+  margin-bottom: 0 !important;
 }
 </style>

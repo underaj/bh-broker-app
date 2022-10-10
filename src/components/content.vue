@@ -241,7 +241,9 @@ export default {
         " ",
         ...this.chosenPlan.map((plan) => {
           return {
-            v: `${plan.name} - ${plan.productName}`,
+            v: `${plan.payer}${plan.productName}${
+              plan.name ? "-" + plan.name : ""
+            }`,
             t: "s",
             s: {
               alignment: { horizontal: "center" },
@@ -359,7 +361,7 @@ export default {
         [
           [
             {
-              v: "保险医疗计划",
+              v: this.productName,
               t: "s",
               s: {
                 alignment: { horizontal: "center", vertical: "center" },
@@ -717,7 +719,9 @@ export default {
 <style scoped>
 .scroll-container {
   overflow-y: auto;
-  width: 100%;
+  width: calc(100vw - 240px);
+  height: calc(100vh - 46px);
+  padding-top: 16px;
 }
 .plan-select-container {
   padding: 0 24px 24px;

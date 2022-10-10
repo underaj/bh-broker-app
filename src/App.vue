@@ -57,4 +57,8 @@ nav a {
   padding: 0 1rem;
   border-left: 1px solid var(--color-border);
 }
+
+.ant-tabs-nav {
+  margin-bottom: 0 !important;
+}
 </style>
