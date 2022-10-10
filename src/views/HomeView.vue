@@ -56,14 +56,35 @@ export default {
             e: { r: 0, c: obj.chosenPlan.length },
           });
           rowDataList.push([
-            " ",
+            {
+              v: ``,
+              t: "s",
+              s: {
+                fill: { patternType: "solid", fgColor: { theme: 3 } },
+                alignment: { horizontal: "center" },
+                font: {
+                  sz: 12,
+                  bold: true,
+                  name: "Cambria",
+                  color: { theme: 2 },
+                },
+              },
+            },
             ...obj.chosenPlan.map((plan) => {
               return {
-                v: `${plan.name} - ${plan.productName}`,
+                v: `${plan.payer}${plan.productName}${
+                  plan.name ? "-" + plan.name : ""
+                }`,
                 t: "s",
                 s: {
+                  fill: { patternType: "solid", fgColor: { theme: 3 } },
                   alignment: { horizontal: "center" },
-                  font: { sz: 12, bold: true, name: "Cambria" },
+                  font: {
+                    sz: 12,
+                    bold: true,
+                    name: "Cambria",
+                    color: { theme: 2 },
+                  },
                 },
               };
             }),
@@ -75,12 +96,14 @@ export default {
                   v: parentName,
                   t: "s",
                   s: {
+                    fill: { patternType: "solid", fgColor: { theme: 4 } },
                     alignment: { horizontal: "center" },
                     font: {
                       bold: true,
                       sz: 12,
                       wrapText: true,
                       name: "Cambria",
+                      color: { theme: 2 },
                     },
                   },
                 },

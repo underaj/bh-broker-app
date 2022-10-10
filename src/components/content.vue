@@ -112,9 +112,15 @@ export default {
                     mergeAnswerList[id] = {};
                   }
                   if (mergeAnswerList[id][item.mergeIds[id]]) {
-                    mergeAnswerList[id][item.mergeIds[id]].push(
-                      valueItem.value
-                    );
+                    if (
+                      mergeAnswerList[id][item.mergeIds[id]].indexOf(
+                        valueItem.value
+                      ) === -1
+                    ) {
+                      mergeAnswerList[id][item.mergeIds[id]].push(
+                        valueItem.value
+                      );
+                    }
                   } else {
                     mergeAnswerList[id][item.mergeIds[id]] = [valueItem.value];
                   }
@@ -238,7 +244,20 @@ export default {
         e: { r: 0, c: this.chosenPlan.length },
       });
       rowDataList.push([
-        " ",
+        {
+          v: ``,
+          t: "s",
+          s: {
+            fill: { patternType: "solid", fgColor: { theme: 3 } },
+            alignment: { horizontal: "center" },
+            font: {
+              sz: 12,
+              bold: true,
+              name: "Cambria",
+              color: { theme: 2 },
+            },
+          },
+        },
         ...this.chosenPlan.map((plan) => {
           return {
             v: `${plan.payer}${plan.productName}${
@@ -246,8 +265,14 @@ export default {
             }`,
             t: "s",
             s: {
+              fill: { patternType: "solid", fgColor: { theme: 3 } },
               alignment: { horizontal: "center" },
-              font: { sz: 12, bold: true, name: "Cambria" },
+              font: {
+                sz: 12,
+                bold: true,
+                name: "Cambria",
+                color: { theme: 2 },
+              },
             },
           };
         }),
@@ -259,8 +284,15 @@ export default {
               v: parentName,
               t: "s",
               s: {
+                fill: { patternType: "solid", fgColor: { theme: 4 } },
                 alignment: { horizontal: "center" },
-                font: { bold: true, sz: 12, wrapText: true, name: "Cambria" },
+                font: {
+                  bold: true,
+                  sz: 12,
+                  wrapText: true,
+                  name: "Cambria",
+                  color: { theme: 2 },
+                },
               },
             },
           ]);
@@ -385,7 +417,6 @@ export default {
           return { wch: 30 };
         }),
       ];
-      console.log("here", mergesData, rowDataList);
       const myWorkBook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(myWorkBook, ws, "Sheet1");
       XLSX.writeFile(myWorkBook, "保险医疗计划.xlsx");
@@ -668,7 +699,7 @@ export default {
             </template>
           </draggable>
         </div>
-        <div v-if="selectionList.length > 0">
+        <div style="margin-top: 24px" v-if="selectionList.length > 0">
           <a-input
             :style="{
               width: '190px',
@@ -786,20 +817,20 @@ export default {
   margin: 0 12px 0 0;
 }
 .merge-value-column {
-  height: 70px;
+  height: 55px;
   background-color: #add8e6;
   padding-left: 10px;
   margin-right: 10px;
   padding-top: 2px;
 }
 .merge-title {
-  font-size: 10px;
+  font-size: 8px;
   line-height: 1;
-  margin: 4px;
+  margin: 1px;
 }
 .value-column {
-  padding-top: 22px;
-  height: 70px;
+  padding-top: 12px;
+  height: 55px;
   padding-left: 10px;
   margin-right: 10px;
 }
