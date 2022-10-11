@@ -235,7 +235,7 @@ export default {
   <main>
     <div class="container">
       <div class="side-bar">
-        <div class="header">保险医疗计划方案模板</div>
+        <div class="header">方案模板</div>
         <a-menu v-model:selectedKeys="chosenProductKeys" :multiple="true">
           <a-menu-item
             v-for="(item, x) in productList"
@@ -279,8 +279,8 @@ export default {
   flex-direction: row;
 }
 .side-bar {
-  width: 240px;
-  max-width: 240px;
+  width: 160px;
+  max-width: 160px;
   height: 100vh;
   border-right: 1px solid #f0f0f0;
 }
