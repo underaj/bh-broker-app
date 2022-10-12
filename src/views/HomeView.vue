@@ -18,6 +18,7 @@ export default {
       chosenProductKeys: [],
       chosenProduct: [],
       activeKey: 0,
+      visible: false,
     };
   },
   methods: {
@@ -42,39 +43,24 @@ export default {
 
       this.chosenProduct = newChosen;
     },
+
     exportExcel() {
       const myWorkBook = XLSX.utils.book_new();
       const sheets = this.$refs.sheets;
-      sheets.forEach((obj) => {
-        if (obj.chosenPlan.length > 0) {
-          const rowDataList = [];
-          const merges = {};
-          const mergesData = [];
+      if (sheets) {
+        sheets.forEach((obj) => {
+          if (obj.chosenPlan.length > 0) {
+            const rowDataList = [];
+            const merges = {};
+            const mergesData = [];
 
-          mergesData.push({
-            s: { r: 0, c: 0 },
-            e: { r: 0, c: obj.chosenPlan.length },
-          });
-          rowDataList.push([
-            {
-              v: ``,
-              t: "s",
-              s: {
-                fill: { patternType: "solid", fgColor: { theme: 3 } },
-                alignment: { horizontal: "center" },
-                font: {
-                  sz: 12,
-                  bold: true,
-                  name: "Cambria",
-                  color: { theme: 2 },
-                },
-              },
-            },
-            ...obj.chosenPlan.map((plan) => {
-              return {
-                v: `${plan.payer}${plan.productName}${
-                  plan.name ? "-" + plan.name : ""
-                }`,
+            mergesData.push({
+              s: { r: 0, c: 0 },
+              e: { r: 0, c: obj.chosenPlan.length },
+            });
+            rowDataList.push([
+              {
+                v: ``,
                 t: "s",
                 s: {
                   fill: { patternType: "solid", fgColor: { theme: 3 } },
@@ -86,145 +72,166 @@ export default {
                     color: { theme: 2 },
                   },
                 },
-              };
-            }),
-          ]);
-          const dataProcess = (selectionList, parentName) => {
-            if (parentName) {
-              rowDataList.push([
-                {
-                  v: parentName,
+              },
+              ...obj.chosenPlan.map((plan) => {
+                return {
+                  v: `${plan.payer}${plan.productName}${
+                    plan.name ? "-" + plan.name : ""
+                  }`,
                   t: "s",
                   s: {
-                    fill: { patternType: "solid", fgColor: { theme: 4 } },
+                    fill: { patternType: "solid", fgColor: { theme: 3 } },
                     alignment: { horizontal: "center" },
                     font: {
-                      bold: true,
                       sz: 12,
-                      wrapText: true,
+                      bold: true,
                       name: "Cambria",
                       color: { theme: 2 },
                     },
                   },
-                },
-              ]);
-              mergesData.push({
-                s: { r: rowDataList.length, c: 0 },
-                e: { r: rowDataList.length, c: obj.chosenPlan.length },
-              });
-            }
-            const filteredSelectionList = selectionList.filter((item) => {
-              return item.active;
-            });
-            filteredSelectionList.forEach((valueItem, row) => {
-              const rowData = [
-                {
-                  v: valueItem.name,
-                  t: "s",
-                  s: {
-                    font: {
-                      bold: true,
-                      sz: 12,
-                      wrapText: true,
-                      name: "Cambria",
+                };
+              }),
+            ]);
+            const dataProcess = (selectionList, parentName) => {
+              if (parentName) {
+                rowDataList.push([
+                  {
+                    v: parentName,
+                    t: "s",
+                    s: {
+                      fill: { patternType: "solid", fgColor: { theme: 4 } },
+                      alignment: { horizontal: "center" },
+                      font: {
+                        bold: true,
+                        sz: 12,
+                        wrapText: true,
+                        name: "Cambria",
+                        color: { theme: 2 },
+                      },
                     },
                   },
-                },
-              ];
-              obj.chosenPlan.forEach((plan, col) => {
-                let currentValue = obj.final[plan.id][valueItem.name];
-                let currentMergeId = null;
-                let nextMergeId = null;
-                let previousMergeId = null;
-                if (valueItem.mergeIds && valueItem.mergeIds[plan.id]) {
-                  currentMergeId = valueItem.mergeIds[plan.id];
-                  currentValue =
-                    obj.mergeFinal[plan.id][valueItem.mergeIds[plan.id]];
-                }
-                if (
-                  filteredSelectionList[row + 1] &&
-                  filteredSelectionList[row + 1].mergeIds &&
-                  filteredSelectionList[row + 1].mergeIds[plan.id]
-                ) {
-                  nextMergeId =
-                    filteredSelectionList[row + 1].mergeIds[plan.id];
-                }
-                if (
-                  filteredSelectionList[row - 1] &&
-                  filteredSelectionList[row - 1].mergeIds &&
-                  filteredSelectionList[row - 1].mergeIds[plan.id]
-                ) {
-                  previousMergeId =
-                    filteredSelectionList[row - 1].mergeIds[plan.id];
-                }
-
-                if (
-                  nextMergeId &&
-                  currentMergeId &&
-                  nextMergeId === currentMergeId
-                ) {
-                  if (!merges[col + 1]) {
-                    merges[col + 1] = {
-                      s: { r: rowDataList.length + 1, c: col + 1 },
-                    };
-                  }
-                } else if (
-                  previousMergeId &&
-                  currentMergeId &&
-                  previousMergeId === currentMergeId
-                ) {
-                  merges[col + 1].e = { r: rowDataList.length + 1, c: col + 1 };
-                  mergesData.push(merges[col + 1]);
-                  merges[col + 1] = null;
-                }
-                rowData.push({
-                  v: currentValue,
-                  t: "s",
-                  s: { alignment: { vertical: "center", wrapText: true } },
+                ]);
+                mergesData.push({
+                  s: { r: rowDataList.length, c: 0 },
+                  e: { r: rowDataList.length, c: obj.chosenPlan.length },
                 });
+              }
+              const filteredSelectionList = selectionList.filter((item) => {
+                return item.active;
               });
-              rowDataList.push(rowData);
-            });
-          };
-          dataProcess(obj.selectionList);
-          obj.listWithParentId.forEach((item) => {
-            dataProcess(item.selectionList, item.name);
-          });
-          const ws = XLSX.utils.json_to_sheet([]);
-          XLSX.utils.sheet_add_aoa(
-            ws,
-            [
-              [
-                {
-                  v: obj.productName,
-                  t: "s",
-                  s: {
-                    alignment: { horizontal: "center", vertical: "center" },
-                    font: { sz: 16, bold: true, name: "Cambria" },
+              filteredSelectionList.forEach((valueItem, row) => {
+                const rowData = [
+                  {
+                    v: valueItem.name,
+                    t: "s",
+                    s: {
+                      font: {
+                        bold: true,
+                        sz: 12,
+                        wrapText: true,
+                        name: "Cambria",
+                      },
+                    },
                   },
-                },
-              ],
-            ],
-            {
-              origin: "A1",
-            }
-          );
-          XLSX.utils.sheet_add_aoa(ws, rowDataList, {
-            origin: "A2",
-          });
-          ws["!merges"] = mergesData;
-          ws["!rows"] = [{ hpt: 30 }];
-          ws["!cols"] = [
-            { wch: 40 },
-            ...obj.chosenPlan.map(() => {
-              return { wch: 30 };
-            }),
-          ];
+                ];
+                obj.chosenPlan.forEach((plan, col) => {
+                  let currentValue = obj.final[plan.id][valueItem.name];
+                  let currentMergeId = null;
+                  let nextMergeId = null;
+                  let previousMergeId = null;
+                  if (valueItem.mergeIds && valueItem.mergeIds[plan.id]) {
+                    currentMergeId = valueItem.mergeIds[plan.id];
+                    currentValue =
+                      obj.mergeFinal[plan.id][valueItem.mergeIds[plan.id]];
+                  }
+                  if (
+                    filteredSelectionList[row + 1] &&
+                    filteredSelectionList[row + 1].mergeIds &&
+                    filteredSelectionList[row + 1].mergeIds[plan.id]
+                  ) {
+                    nextMergeId =
+                      filteredSelectionList[row + 1].mergeIds[plan.id];
+                  }
+                  if (
+                    filteredSelectionList[row - 1] &&
+                    filteredSelectionList[row - 1].mergeIds &&
+                    filteredSelectionList[row - 1].mergeIds[plan.id]
+                  ) {
+                    previousMergeId =
+                      filteredSelectionList[row - 1].mergeIds[plan.id];
+                  }
 
-          XLSX.utils.book_append_sheet(myWorkBook, ws, obj.productName);
-        }
-      });
-      XLSX.writeFile(myWorkBook, "保险医疗计划.xlsx");
+                  if (
+                    nextMergeId &&
+                    currentMergeId &&
+                    nextMergeId === currentMergeId
+                  ) {
+                    if (!merges[col + 1]) {
+                      merges[col + 1] = {
+                        s: { r: rowDataList.length + 1, c: col + 1 },
+                      };
+                    }
+                  } else if (
+                    previousMergeId &&
+                    currentMergeId &&
+                    previousMergeId === currentMergeId
+                  ) {
+                    merges[col + 1].e = {
+                      r: rowDataList.length + 1,
+                      c: col + 1,
+                    };
+                    mergesData.push(merges[col + 1]);
+                    merges[col + 1] = null;
+                  }
+                  rowData.push({
+                    v: currentValue,
+                    t: "s",
+                    s: { alignment: { vertical: "center", wrapText: true } },
+                  });
+                });
+                rowDataList.push(rowData);
+              });
+            };
+            dataProcess(obj.selectionList);
+            obj.listWithParentId.forEach((item) => {
+              dataProcess(item.selectionList, item.name);
+            });
+            const ws = XLSX.utils.json_to_sheet([]);
+            XLSX.utils.sheet_add_aoa(
+              ws,
+              [
+                [
+                  {
+                    v: obj.productName,
+                    t: "s",
+                    s: {
+                      alignment: { horizontal: "center", vertical: "center" },
+                      font: { sz: 16, bold: true, name: "Cambria" },
+                    },
+                  },
+                ],
+              ],
+              {
+                origin: "A1",
+              }
+            );
+            XLSX.utils.sheet_add_aoa(ws, rowDataList, {
+              origin: "A2",
+            });
+            ws["!merges"] = mergesData;
+            ws["!rows"] = [{ hpt: 30 }];
+            ws["!cols"] = [
+              { wch: 40 },
+              ...obj.chosenPlan.map(() => {
+                return { wch: 30 };
+              }),
+            ];
+
+            XLSX.utils.book_append_sheet(myWorkBook, ws, obj.productName);
+          }
+        });
+        XLSX.writeFile(myWorkBook, "保险医疗计划.xlsx");
+      }
       this.visible = false;
     },
   },
@@ -245,11 +252,7 @@ export default {
           >
         </a-menu>
         <div class="button-container">
-          <a-button
-            type="primary"
-            class="button"
-            @click="() => exportExcel('EXPORT')"
-          >
+          <a-button type="primary" class="button" @click="visible = true">
             导出所有列表
           </a-button>
         </div>
@@ -268,6 +271,26 @@ export default {
         </a-tab-pane>
       </a-tabs>
     </div>
+    <a-modal
+      ref="modalRef"
+      v-model:visible="visible"
+      :wrap-style="{ overflow: 'hidden' }"
+      :title="null"
+      :footer="null"
+    >
+      <div class="modal-container">
+        <p>确定导出以下选项到Excel？</p>
+        <ul>
+          <li v-for="(item, x) in chosenProduct" :key="x">{{ item.name }}</li>
+        </ul>
+        <div class="modal-button-row">
+          <a-button style="margin-right: 8px" @click="visible = false">
+            取消
+          </a-button>
+          <a-button type="primary" @click="exportExcel"> 确定下载 </a-button>
+        </div>
+      </div>
+    </a-modal>
   </main>
 </template>
 
