@@ -27,8 +27,12 @@ export default {
   data() {
     return {
       visible: false,
+      showAddPlan: false,
       checkAll: true,
       indeterminate: false,
+      newPayerName: "",
+      newProductName: "",
+      newName: "",
       planList: [],
       chosenPlan: [],
       selectionList: [],
@@ -37,8 +41,8 @@ export default {
       final: {},
       mergeAnswerList: {},
       mergeFinal: {},
-      newRowName: "",
-      newRowNameError: "",
+      newRowName: { general: "" },
+      newRowNameError: { general: "" },
       mode: "",
     };
   },
@@ -83,6 +87,23 @@ export default {
     },
     setMergeSelected(value, planId, mergeId) {
       this.mergeFinal[planId][mergeId] = value;
+    },
+    toggleAddPlan() {
+      this.showAddPlan = true;
+    },
+    addPlan() {
+      const planObj = {
+        id: new Date().valueOf(),
+        payer: this.newPayerName,
+        productName: this.newProductName,
+        name: this.newName,
+        isNew: true,
+        checked: true,
+      };
+      this.final[planObj.id] = {};
+      this.mergeFinal[planObj.id] = {};
+      this.planList.unshift(planObj);
+      this.chosenPlan.unshift(planObj);
     },
     showModal(mode) {
       this.mode = mode;
@@ -217,18 +238,36 @@ export default {
           );
         });
     },
-    addNewRow() {
-      if (this.newRowName) {
-        this.newRowNameError = "";
-        const newValue = {
-          name: this.newRowName,
-          values: [],
-          active: true,
-        };
-        this.selectionList = [...this.selectionList, newValue];
-        this.newRowName = "";
+    addNewRow(parentId) {
+      console.log(parentId);
+      if (parentId) {
+        const newRowNameStr = this.newRowName[parentId];
+        if (newRowNameStr) {
+          this.listWithParentId.forEach((item) => {
+            if (parentId === item.parentId) {
+              item.selectionList.push({
+                name: newRowNameStr,
+                values: [],
+                active: true,
+              });
+            }
+          });
+        } else {
+          this.newRowNameError[parentId] = "请输入有效列行名";
+        }
       } else {
-        this.newRowNameError = "请输入有效列行名";
+        if (this.newRowName.general) {
+          this.newRowNameError.general = "";
+          const newValue = {
+            name: this.newRowName.general,
+            values: [],
+            active: true,
+          };
+          this.selectionList = [...this.selectionList, newValue];
+          this.newRowName.general = "";
+        } else {
+          this.newRowNameError.general = "请输入有效列行名";
+        }
       }
     },
     checkIfHaveValue(item, plan) {
@@ -500,15 +539,25 @@ export default {
             @click="() => showModal('EXPORT')"
             >导出列表</a-button
           >
-          <a-button
+          <!-- <a-button
+            v-if="chosenPlan.length > 0"
             type="primary"
             class="export-button"
             @click="() => showModal('SAVE')"
             >储存选项</a-button
-          >
+          > -->
         </div>
         <div>
           <div class="title-container">
+            <a-button
+              v-if="chosenPlan.length > 0"
+              type="primary"
+              size="small"
+              @click="toggleAddPlan"
+              class="add-plan-button"
+            >
+              添加计划
+            </a-button>
             <draggable
               v-model="chosenPlan"
               item-key="name"
@@ -552,116 +601,10 @@ export default {
                       <div class="merge-title">
                         合并号：{{ element.mergeIds[plan.id] }}
                       </div>
-                      <a-input
-                        :style="{
-                          width: '190px',
-                          padding: '2px 2px 2px 11px',
-                        }"
-                        v-model:value="
+                      <a-tooltip>
+                        <template #title>{{
                           mergeFinal[plan.id][element.mergeIds[plan.id]]
-                        "
-                      >
-                        <template #suffix>
-                          <a-dropdown>
-                            <template #overlay>
-                              <a-menu
-                                @click="
-                                  ({ key }) =>
-                                    setMergeSelected(
-                                      key,
-                                      plan.id,
-                                      element.mergeIds[plan.id]
-                                    )
-                                "
-                              >
-                                <a-menu-item
-                                  v-for="value in mergeAnswerList[plan.id][
-                                    element.mergeIds[plan.id]
-                                  ]"
-                                  :key="value"
-                                >
-                                  {{ value }}
-                                </a-menu-item>
-                              </a-menu>
-                            </template>
-                            <a-button type="text">
-                              <DownOutlined />
-                            </a-button>
-                          </a-dropdown>
-                        </template>
-                      </a-input>
-                    </div>
-                    <div class="value-column" v-else>
-                      <a-input
-                        :style="{
-                          width: '190px',
-                          padding: '2px 2px 2px 11px',
-                        }"
-                        v-model:value="final[plan.id][element.name]"
-                      >
-                        <template #suffix>
-                          <a-dropdown>
-                            <template #overlay>
-                              <a-menu
-                                @click="
-                                  ({ key }) =>
-                                    setSelected(key, plan.id, element.name)
-                                "
-                              >
-                                <a-menu-item
-                                  v-for="value in answerList[element.name][
-                                    plan.id
-                                  ]"
-                                  :key="value"
-                                >
-                                  {{ value }}
-                                </a-menu-item>
-                              </a-menu>
-                            </template>
-                            <a-button type="text">
-                              <DownOutlined />
-                            </a-button>
-                          </a-dropdown>
-                        </template>
-                      </a-input>
-                    </div>
-                  </div>
-                  <div class="active-value-container">
-                    <a-checkbox v-model:checked="element.active"></a-checkbox>
-                  </div>
-                </div>
-              </template>
-            </draggable>
-            <div
-              v-for="parentGroup in listWithParentId"
-              :key="parentGroup.parentId"
-            >
-              <div class="group-title">{{ parentGroup.name }}</div>
-              <draggable
-                v-model="parentGroup.selectionList"
-                item-key="name"
-                handle=".handle"
-              >
-                <template #item="{ element }">
-                  <div class="selection-row">
-                    <!-- <drag-outlined class="handle" style="margin-top: 8px" /> -->
-                    <div class="value-title">{{ element.name }}</div>
-                    <div
-                      class="input-container"
-                      v-for="(plan, y) in chosenPlan"
-                      :key="y"
-                    >
-                      <div
-                        v-if="
-                          element.mergeIds &&
-                          element.mergeIds[plan.id] &&
-                          mergeFinal[plan.id]
-                        "
-                        class="merge-value-column"
-                      >
-                        <div class="merge-title">
-                          合并号：{{ element.mergeIds[plan.id] }}
-                        </div>
+                        }}</template>
                         <a-input
                           :style="{
                             width: '190px',
@@ -700,8 +643,13 @@ export default {
                             </a-dropdown>
                           </template>
                         </a-input>
-                      </div>
-                      <div class="value-column" v-else>
+                      </a-tooltip>
+                    </div>
+                    <div class="value-column" v-else>
+                      <a-tooltip>
+                        <template #title>{{
+                          final[plan.id][element.name]
+                        }}</template>
                         <a-input
                           :style="{
                             width: '190px',
@@ -734,6 +682,142 @@ export default {
                             </a-dropdown>
                           </template>
                         </a-input>
+                      </a-tooltip>
+                    </div>
+                  </div>
+                  <div class="active-value-container">
+                    <a-checkbox v-model:checked="element.active"></a-checkbox>
+                  </div>
+                </div>
+              </template>
+            </draggable>
+            <div style="margin: 24px 0 0 12px" v-if="selectionList.length > 0">
+              <a-input
+                :style="{
+                  width: '190px',
+                  padding: '2px 2px 2px 11px',
+                  'margin-right': '12px',
+                }"
+                placeholder="添加列行"
+                v-model:value="newRowName.general"
+              />
+              <a-button type="primary" size="small" @click="() => addNewRow()">
+                添加
+              </a-button>
+              <p class="new-row-name-error">{{ newRowNameError.general }}</p>
+            </div>
+            <div
+              v-for="parentGroup in listWithParentId"
+              :key="parentGroup.parentId"
+            >
+              <div class="group-title">{{ parentGroup.name }}</div>
+              <draggable
+                v-model="parentGroup.selectionList"
+                item-key="name"
+                handle=".handle"
+              >
+                <template #item="{ element }">
+                  <div class="selection-row">
+                    <!-- <drag-outlined class="handle" style="margin-top: 8px" /> -->
+                    <div class="value-title">{{ element.name }}</div>
+                    <div
+                      class="input-container"
+                      v-for="(plan, y) in chosenPlan"
+                      :key="y"
+                    >
+                      <div
+                        v-if="
+                          element.mergeIds &&
+                          element.mergeIds[plan.id] &&
+                          mergeFinal[plan.id]
+                        "
+                        class="merge-value-column"
+                      >
+                        <div class="merge-title">
+                          合并号：{{ element.mergeIds[plan.id] }}
+                        </div>
+                        <a-tooltip>
+                          <template #title>{{
+                            mergeFinal[plan.id][element.mergeIds[plan.id]]
+                          }}</template>
+                          <a-input
+                            :style="{
+                              width: '190px',
+                              padding: '2px 2px 2px 11px',
+                            }"
+                            v-model:value="
+                              mergeFinal[plan.id][element.mergeIds[plan.id]]
+                            "
+                          >
+                            <template #suffix>
+                              <a-dropdown>
+                                <template #overlay>
+                                  <a-menu
+                                    @click="
+                                      ({ key }) =>
+                                        setMergeSelected(
+                                          key,
+                                          plan.id,
+                                          element.mergeIds[plan.id]
+                                        )
+                                    "
+                                  >
+                                    <a-menu-item
+                                      v-for="value in mergeAnswerList[plan.id][
+                                        element.mergeIds[plan.id]
+                                      ]"
+                                      :key="value"
+                                    >
+                                      {{ value }}
+                                    </a-menu-item>
+                                  </a-menu>
+                                </template>
+                                <a-button type="text">
+                                  <DownOutlined />
+                                </a-button>
+                              </a-dropdown>
+                            </template>
+                          </a-input>
+                        </a-tooltip>
+                      </div>
+                      <div class="value-column" v-else>
+                        <a-tooltip>
+                          <template #title>{{
+                            final[plan.id][element.name]
+                          }}</template>
+                          <a-input
+                            :style="{
+                              width: '190px',
+                              padding: '2px 2px 2px 11px',
+                            }"
+                            v-model:value="final[plan.id][element.name]"
+                          >
+                            <template #suffix>
+                              <a-dropdown>
+                                <template #overlay>
+                                  <a-menu
+                                    @click="
+                                      ({ key }) =>
+                                        setSelected(key, plan.id, element.name)
+                                    "
+                                  >
+                                    <a-menu-item
+                                      v-for="value in answerList[element.name][
+                                        plan.id
+                                      ]"
+                                      :key="value"
+                                    >
+                                      {{ value }}
+                                    </a-menu-item>
+                                  </a-menu>
+                                </template>
+                                <a-button type="text">
+                                  <DownOutlined />
+                                </a-button>
+                              </a-dropdown>
+                            </template>
+                          </a-input>
+                        </a-tooltip>
                       </div>
                     </div>
                     <div class="active-value-container">
@@ -742,21 +826,30 @@ export default {
                   </div>
                 </template>
               </draggable>
-            </div>
-            <div style="margin-top: 24px" v-if="selectionList.length > 0">
-              <a-input
-                :style="{
-                  width: '190px',
-                  padding: '2px 2px 2px 11px',
-                  'margin-right': '12px',
-                }"
-                placeholder="添加列行"
-                v-model:value="newRowName"
-              />
-              <a-button type="primary" size="small" @click="addNewRow">
-                添加
-              </a-button>
-              <p class="new-row-name-error">{{ newRowNameError }}</p>
+              <div
+                style="margin: 24px 0 0 12px"
+                v-if="selectionList.length > 0"
+              >
+                <a-input
+                  :style="{
+                    width: '190px',
+                    padding: '2px 2px 2px 11px',
+                    'margin-right': '12px',
+                  }"
+                  placeholder="添加列行"
+                  v-model:value="newRowName[parentGroup.parentId]"
+                />
+                <a-button
+                  type="primary"
+                  size="small"
+                  @click="() => addNewRow(parentGroup.parentId)"
+                >
+                  添加
+                </a-button>
+                <p class="new-row-name-error">
+                  {{ newRowNameError[parentGroup.parentId] }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -790,6 +883,37 @@ export default {
         </div>
       </div>
     </a-modal>
+    <a-modal
+      ref="modalRef"
+      v-model:visible="showAddPlan"
+      :wrap-style="{ overflow: 'hidden' }"
+      title="添加计划"
+      :footer="null"
+    >
+      <div class="modal-container">
+        <a-input
+          style="margin-bottom: 12px"
+          v-model:value="newPayerName"
+          placeholder="保险公司"
+        ></a-input>
+        <a-input
+          style="margin-bottom: 12px"
+          v-model:value="newProductName"
+          placeholder="产品名称"
+        ></a-input>
+        <a-input
+          style="margin-bottom: 12px"
+          v-model:value="newName"
+          placeholder="计划类别"
+        ></a-input>
+        <div class="modal-button-row">
+          <a-button style="margin-right: 8px" @click="showAddPlan = false">
+            取消
+          </a-button>
+          <a-button type="primary" @click="addPlan"> 添加 </a-button>
+        </div>
+      </div>
+    </a-modal>
   </main>
 </template>
 
@@ -820,13 +944,16 @@ export default {
 .title-container {
   display: flex;
   flex-direction: row;
-  margin-left: 266px;
   height: 30px;
   margin-top: 16px;
+}
+.add-plan-button {
+  margin-left: 14px;
 }
 .title-inner-container {
   display: flex;
   flex-direction: row;
+  margin-left: 158px;
 }
 .title-item {
   width: 232px;
@@ -844,7 +971,6 @@ export default {
   text-align: center;
 }
 .content-container {
-  margin-left: 24px;
   padding-bottom: 48px;
 }
 .selection-row {
