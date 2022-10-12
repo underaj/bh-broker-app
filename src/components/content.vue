@@ -26,6 +26,7 @@ export default {
   },
   data() {
     return {
+      isLoading: false,
       visible: false,
       showAddPlan: false,
       checkAll: true,
@@ -125,6 +126,7 @@ export default {
       return option.key.toLowerCase().indexOf(input.toLowerCase()) >= 0;
     },
     getDetails() {
+      this.isLoading = true;
       const planId = [];
       this.planList.forEach((plan) => {
         if (plan.checked) {
@@ -229,17 +231,17 @@ export default {
           this.final = final;
           this.mergeAnswerList = mergeAnswerList;
           this.mergeFinal = mergeFinal;
-          console.log(
-            this.answerList,
-            this.final,
-            this.listWithParentId,
-            mergeAnswerList,
-            mergeFinal
-          );
+          // console.log(
+          //   this.answerList,
+          //   this.final,
+          //   this.listWithParentId,
+          //   mergeAnswerList,
+          //   mergeFinal
+          // );
+          this.isLoading = false;
         });
     },
     addNewRow(parentId) {
-      console.log(parentId);
       if (parentId) {
         const newRowNameStr = this.newRowName[parentId];
         if (newRowNameStr) {
@@ -530,7 +532,7 @@ export default {
               }`
             }}
           </a-checkbox>
-          <a-button type="primary" class="export-button" @click="getDetails"
+          <a-button type="primary" class="export-button" @click="getDetails" :loading="isLoading"
             >获取计划</a-button
           >
           <a-button
