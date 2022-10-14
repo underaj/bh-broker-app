@@ -133,113 +133,120 @@ export default {
           planId.push(plan.id);
         }
       });
-      axios
-        .get("/api/queryItems", {
-          params: { planId },
-          paramsSerializer: function (params) {
-            return qs.stringify(params, { arrayFormat: "repeat" });
-          },
-        })
-        .then((res) => {
-          this.chosenPlan = res.data.data.plans;
-          this.selectionList = [];
-          this.listWithParentId = [];
-          const itemParents = res.data.data.itemParents;
-          const final = {};
-          const answerList = {};
-          const mergeFinal = {};
-          const mergeAnswerList = {};
-          res.data.data.items.forEach((item) => {
-            item.active = true;
-            this.chosenPlan.forEach((plan) => {
-              if (item.mergeIds && item.mergeIds[plan.id]) {
-                if (!mergeFinal[plan.id]) {
-                  mergeFinal[plan.id] = {};
-                  mergeFinal[plan.id][item.mergeIds[plan.id]] = "";
-                }
-              } else {
-                if (!final[plan.id]) {
-                  final[plan.id] = {};
-                }
-                final[plan.id][item.name] = "";
-              }
-            });
-            answerList[item.name] = {};
-            item.values.forEach((valueItem) => {
-              valueItem.planIds.forEach((id) => {
-                if (item.mergeIds && item.mergeIds[id]) {
-                  if (!mergeFinal[id][item.mergeIds[id]]) {
-                    mergeFinal[id][item.mergeIds[id]] = valueItem.value;
-                  }
-                  if (!mergeAnswerList[id]) {
-                    mergeAnswerList[id] = {};
-                  }
-                  if (mergeAnswerList[id][item.mergeIds[id]]) {
-                    if (
-                      mergeAnswerList[id][item.mergeIds[id]].indexOf(
-                        valueItem.value
-                      ) === -1
-                    ) {
-                      mergeAnswerList[id][item.mergeIds[id]].push(
-                        valueItem.value
-                      );
-                    }
-                  } else {
-                    mergeAnswerList[id][item.mergeIds[id]] = [valueItem.value];
+      if (planId.length === 0) {
+        // this.chosenPlan = [];
+        this.isLoading = false;
+      } else {
+        axios
+          .get("/api/queryItems", {
+            params: { planId },
+            paramsSerializer: function (params) {
+              return qs.stringify(params, { arrayFormat: "repeat" });
+            },
+          })
+          .then((res) => {
+            this.chosenPlan = res.data.data.plans;
+            this.selectionList = [];
+            this.listWithParentId = [];
+            const itemParents = res.data.data.itemParents;
+            const final = {};
+            const answerList = {};
+            const mergeFinal = {};
+            const mergeAnswerList = {};
+            res.data.data.items.forEach((item) => {
+              item.active = true;
+              this.chosenPlan.forEach((plan) => {
+                if (item.mergeIds && item.mergeIds[plan.id]) {
+                  if (!mergeFinal[plan.id]) {
+                    mergeFinal[plan.id] = {};
+                    mergeFinal[plan.id][item.mergeIds[plan.id]] = "";
                   }
                 } else {
-                  if (!final[id][item.name]) {
-                    final[id][item.name] = valueItem.value;
+                  if (!final[plan.id]) {
+                    final[plan.id] = {};
                   }
-                  if (answerList[item.name][id]) {
-                    answerList[item.name][id].push(valueItem.value);
+                  final[plan.id][item.name] = "";
+                }
+              });
+              answerList[item.name] = {};
+              item.values.forEach((valueItem) => {
+                valueItem.planIds.forEach((id) => {
+                  if (item.mergeIds && item.mergeIds[id]) {
+                    if (!mergeFinal[id][item.mergeIds[id]]) {
+                      mergeFinal[id][item.mergeIds[id]] = valueItem.value;
+                    }
+                    if (!mergeAnswerList[id]) {
+                      mergeAnswerList[id] = {};
+                    }
+                    if (mergeAnswerList[id][item.mergeIds[id]]) {
+                      if (
+                        mergeAnswerList[id][item.mergeIds[id]].indexOf(
+                          valueItem.value
+                        ) === -1
+                      ) {
+                        mergeAnswerList[id][item.mergeIds[id]].push(
+                          valueItem.value
+                        );
+                      }
+                    } else {
+                      mergeAnswerList[id][item.mergeIds[id]] = [
+                        valueItem.value,
+                      ];
+                    }
                   } else {
-                    answerList[item.name][id] = [valueItem.value];
+                    if (!final[id][item.name]) {
+                      final[id][item.name] = valueItem.value;
+                    }
+                    if (answerList[item.name][id]) {
+                      answerList[item.name][id].push(valueItem.value);
+                    } else {
+                      answerList[item.name][id] = [valueItem.value];
+                    }
+                  }
+                });
+              });
+              if (item.parentId) {
+                let newParentItem = {};
+                this.listWithParentId.forEach((parentItem) => {
+                  if (parentItem.parentId === item.parentId) {
+                    newParentItem = parentItem;
+                  }
+                });
+
+                if (newParentItem.parentId) {
+                  newParentItem.selectionList.push(item);
+                } else {
+                  for (let x = 0; x < itemParents.length; x++) {
+                    if (itemParents[x].id === item.parentId) {
+                      newParentItem = {
+                        parentId: itemParents[x].id,
+                        name: itemParents[x].name,
+                        selectionList: [item],
+                      };
+                      this.listWithParentId.push(newParentItem);
+                      break;
+                    }
                   }
                 }
-              });
-            });
-            if (item.parentId) {
-              let newParentItem = {};
-              this.listWithParentId.forEach((parentItem) => {
-                if (parentItem.parentId === item.parentId) {
-                  newParentItem = parentItem;
-                }
-              });
-
-              if (newParentItem.parentId) {
-                newParentItem.selectionList.push(item);
               } else {
-                for (let x = 0; x < itemParents.length; x++) {
-                  if (itemParents[x].id === item.parentId) {
-                    newParentItem = {
-                      parentId: itemParents[x].id,
-                      name: itemParents[x].name,
-                      selectionList: [item],
-                    };
-                    this.listWithParentId.push(newParentItem);
-                    break;
-                  }
-                }
+                this.selectionList.push(item);
               }
-            } else {
-              this.selectionList.push(item);
-            }
-          });
+            });
 
-          this.answerList = answerList;
-          this.final = final;
-          this.mergeAnswerList = mergeAnswerList;
-          this.mergeFinal = mergeFinal;
-          // console.log(
-          //   this.answerList,
-          //   this.final,
-          //   this.listWithParentId,
-          //   mergeAnswerList,
-          //   mergeFinal
-          // );
-          this.isLoading = false;
-        });
+            this.answerList = answerList;
+            this.final = final;
+            this.mergeAnswerList = mergeAnswerList;
+            this.mergeFinal = mergeFinal;
+            // console.log(
+            //   this.answerList,
+            //   this.final,
+            //   this.listWithParentId,
+            //   mergeAnswerList,
+            //   mergeFinal
+            // );
+            this.isLoading = false;
+          });
+      }
     },
     addNewRow(parentId) {
       if (parentId) {
@@ -532,7 +539,11 @@ export default {
               }`
             }}
           </a-checkbox>
-          <a-button type="primary" class="export-button" @click="getDetails" :loading="isLoading"
+          <a-button
+            type="primary"
+            class="export-button"
+            @click="getDetails"
+            :loading="isLoading"
             >获取计划</a-button
           >
           <a-button
