@@ -25,7 +25,7 @@ export default defineConfig({
     port: 8010,
     proxy: {
       "/api": {
-        target: "http://139.224.248.65:8020",
+        target: "http://127.0.0.1:8360",
         // ↑这个就是你的接口地址↑
         changeOrigin: true,
       },

@@ -7,7 +7,7 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      name: "Root",
+      name: "root",
       component: RootView,
     },
     {
