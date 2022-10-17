@@ -124,6 +124,7 @@ export default {
     getDetails() {
       this.isLoading = true;
       const planId = [];
+      this.planList = this.planList.filter((item) => !item.isNew);
       this.planList.forEach((plan) => {
         if (plan.checked) {
           planId.push(plan.id);
@@ -145,7 +146,7 @@ export default {
               message.error(res.data.errmsg);
               this.isLoading = false;
             } else {
-              this.chosenPlan = res.data.data.plans;
+              const getChosenPlan = res.data.data.plans;
               this.originalSelectionList = res.data.data.items;
               this.selectionList = [];
               this.listWithParentId = [];
@@ -156,7 +157,7 @@ export default {
               const mergeAnswerList = {};
               res.data.data.items.forEach((item) => {
                 item.active = true;
-                this.chosenPlan.forEach((plan) => {
+                getChosenPlan.forEach((plan) => {
                   if (item.mergeIds && item.mergeIds[plan.id]) {
                     if (!mergeFinal[plan.id]) {
                       mergeFinal[plan.id] = {};
@@ -234,6 +235,7 @@ export default {
                 }
               });
 
+              this.chosenPlan = getChosenPlan;
               this.answerList = answerList;
               this.final = final;
               this.mergeAnswerList = mergeAnswerList;
