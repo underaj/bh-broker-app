@@ -38,6 +38,7 @@ export default {
       newName: "",
       planList: [],
       chosenPlan: [],
+      originalSelectionList: [],
       selectionList: [],
       listWithParentId: [],
       answerList: {},
@@ -92,21 +93,10 @@ export default {
       this.mergeFinal[planId][mergeId] = value;
     },
     toggleAddPlan() {
+      this.newPayerName = "";
+      this.newProductName = "";
+      this.newName = "";
       this.showAddPlan = true;
-    },
-    addPlan() {
-      const planObj = {
-        id: new Date().valueOf(),
-        payer: this.newPayerName,
-        productName: this.newProductName,
-        name: this.newName,
-        isNew: true,
-        checked: true,
-      };
-      this.final[planObj.id] = {};
-      this.mergeFinal[planObj.id] = {};
-      this.planList.unshift(planObj);
-      this.chosenPlan.unshift(planObj);
     },
     showModal(mode) {
       this.mode = mode;
@@ -156,6 +146,7 @@ export default {
               this.isLoading = false;
             } else {
               this.chosenPlan = res.data.data.plans;
+              this.originalSelectionList = res.data.data.items;
               this.selectionList = [];
               this.listWithParentId = [];
               const itemParents = res.data.data.itemParents;
@@ -247,13 +238,6 @@ export default {
               this.final = final;
               this.mergeAnswerList = mergeAnswerList;
               this.mergeFinal = mergeFinal;
-              // console.log(
-              //   this.answerList,
-              //   this.final,
-              //   this.listWithParentId,
-              //   mergeAnswerList,
-              //   mergeFinal
-              // );
               this.isLoading = false;
             }
           });
@@ -299,30 +283,79 @@ export default {
       });
       return show;
     },
+    addPlan() {
+      const newPlanId = new Date().valueOf();
+      const planObj = {
+        id: newPlanId,
+        payer: this.newPayerName,
+        productName: this.newProductName,
+        name: this.newName,
+        isNew: true,
+        checked: true,
+      };
+      this.originalSelectionList.forEach((item) => {
+        const values = item.values.map((item) => item.value);
+        this.answerList[item.name][newPlanId] = values;
+      });
+      this.final[planObj.id] = {};
+      this.mergeFinal[planObj.id] = {};
+      this.planList.unshift(planObj);
+      this.chosenPlan.unshift(planObj);
+      this.showAddPlan = false;
+    },
     saveAnswers() {
+      const postPlan = [];
       const postData = [];
-      this.selectionList.forEach(({ name }) => {
-        this.chosenPlan.forEach(({ id }) => {
-          const answer = this.final[id][name];
-          if (answer) {
-            if (this.answerList[name][id].indexOf(answer) > -1) {
-              console.log("answer exists");
+      this.chosenPlan.forEach(({ id, payer, productName, name, isNew }) => {
+        if (isNew) {
+          postPlan.push({
+            id,
+            payer,
+            productName,
+            name,
+            typeId: this.typeId,
+          });
+        }
+        this.originalSelectionList.forEach(
+          ({ seq, mergeIds, name, parentId }) => {
+            if (mergeIds && mergeIds[id]) {
+              const answer = this.mergeFinal[id][mergeIds[id]];
+              if (this.mergeAnswerList[id][mergeIds[id]].indexOf(answer) > -1) {
+                console.log("merge answer exists");
+              } else {
+                postData.push({
+                  planId: id,
+                  name,
+                  value: answer,
+                  parentId,
+                  mergeId: mergeIds[id],
+                  seq,
+                });
+              }
             } else {
-              postData.push({
-                planId: id,
-                name,
-                value: answer,
-                seq: this.answerList[name][id].length,
-              });
+              const answer = this.final[id][name];
+              if (answer) {
+                if (this.answerList[name][id].indexOf(answer) > -1 && !isNew) {
+                  console.log("answer exists");
+                } else {
+                  postData.push({
+                    planId: id,
+                    name,
+                    value: answer,
+                    parentId,
+                    seq,
+                  });
+                }
+              }
             }
           }
-        });
+        );
       });
       if (postData.length > 0) {
         axios({
-          url: "/api/plan/items",
+          url: "/api/updateItems",
           method: "post",
-          data: { items: postData },
+          data: { plans: postPlan, items: postData },
           header: {
             "Content-Type": "application/json",
           },
@@ -563,13 +596,13 @@ export default {
             @click="() => showModal('EXPORT')"
             >导出列表</a-button
           >
-          <!-- <a-button
+          <a-button
             v-if="chosenPlan.length > 0"
             type="primary"
             class="export-button"
             @click="() => showModal('SAVE')"
             >储存选项</a-button
-          > -->
+          >
         </div>
         <div>
           <div class="title-container">
@@ -626,9 +659,13 @@ export default {
                         合并号：{{ element.mergeIds[plan.id] }}
                       </div>
                       <a-tooltip>
-                        <template #title>{{
-                          mergeFinal[plan.id][element.mergeIds[plan.id]]
-                        }}</template>
+                        <template
+                          v-if="mergeFinal[plan.id][element.mergeIds[plan.id]]"
+                          #title
+                          >{{
+                            mergeFinal[plan.id][element.mergeIds[plan.id]]
+                          }}</template
+                        >
                         <a-input
                           :style="{
                             width: '190px',
@@ -671,7 +708,7 @@ export default {
                     </div>
                     <div class="value-column" v-else>
                       <a-tooltip>
-                        <template #title>{{
+                        <template v-if="final[plan.id][element.name]" #title>{{
                           final[plan.id][element.name]
                         }}</template>
                         <a-input
@@ -761,9 +798,15 @@ export default {
                           合并号：{{ element.mergeIds[plan.id] }}
                         </div>
                         <a-tooltip>
-                          <template #title>{{
-                            mergeFinal[plan.id][element.mergeIds[plan.id]]
-                          }}</template>
+                          <template
+                            v-if="
+                              mergeFinal[plan.id][element.mergeIds[plan.id]]
+                            "
+                            #title
+                            >{{
+                              mergeFinal[plan.id][element.mergeIds[plan.id]]
+                            }}</template
+                          >
                           <a-input
                             :style="{
                               width: '190px',
@@ -806,9 +849,11 @@ export default {
                       </div>
                       <div class="value-column" v-else>
                         <a-tooltip>
-                          <template #title>{{
-                            final[plan.id][element.name]
-                          }}</template>
+                          <template
+                            v-if="final[plan.id][element.name]"
+                            #title
+                            >{{ final[plan.id][element.name] }}</template
+                          >
                           <a-input
                             :style="{
                               width: '190px',
