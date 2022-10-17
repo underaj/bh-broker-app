@@ -30,12 +30,12 @@ export default {
       axios({
         url: "/api/loginUser",
         method: "post",
-        data: { user: "broker", password: "123456" },
+        data: { user: this.user, password: this.password },
         header: {
           "Content-Type": "application/json",
         },
       }).then((res) => {
-        if (res.data.data.token) {
+        if (res.data.data && res.data.data.token) {
           const token = res.data.data.token;
           window.localStorage.setItem("token", token);
           axios.defaults.headers.common.Authorization = token;

@@ -28,6 +28,8 @@ export default {
           this.$router.push({ name: "root" });
         }
       });
+    } else {
+      this.$router.push({ name: "root" });
     }
   },
   data() {
@@ -40,6 +42,10 @@ export default {
     };
   },
   methods: {
+    logout() {
+      window.localStorage.setItem("token", "");
+      this.$router.push({ name: "root" });
+    },
     selectProduct(item) {
       const newChosen = this.chosenProduct.slice();
       let existingLocation = -1;
@@ -61,7 +67,6 @@ export default {
 
       this.chosenProduct = newChosen;
     },
-
     exportExcel() {
       const myWorkBook = XLSX.utils.book_new();
       const sheets = this.$refs.sheets;
@@ -273,6 +278,7 @@ export default {
           <a-button type="primary" class="button" @click="visible = true">
             导出所有列表
           </a-button>
+          <a-button type="text" class="button" @click="logout"> 登出 </a-button>
         </div>
       </div>
       <a-tabs v-model:activeKey="activeKey">
@@ -328,12 +334,13 @@ export default {
 .button-container {
   width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 .button {
   width: 90%;
-  margin: 12px 0;
+  margin: 12px 0 0;
   align-self: center;
 }
 .ant-menu {
