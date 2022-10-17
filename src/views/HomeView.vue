@@ -1,5 +1,8 @@
 <script>
 import * as XLSX from "xlsx-js-style";
+import axios from "axios";
+import { message } from "ant-design-vue";
+import "ant-design-vue/es/message/style/css";
 import ContentView from "../components/content.vue";
 const products = [
   { name: "高端医疗产品", id: 0, checked: false },
@@ -11,6 +14,21 @@ const products = [
 export default {
   components: {
     ContentView,
+  },
+  mounted() {
+    const token = window.localStorage.getItem("token");
+    if (token) {
+      axios.defaults.headers.common.Authorization = token;
+      axios({
+        url: "/api/checkAuth",
+      }).then((res) => {
+        if (res.data.errno === 401) {
+          window.localStorage.setItem("token", "");
+          message.error(res.data.errmsg);
+          this.$router.push({ name: "root" });
+        }
+      });
+    }
   },
   data() {
     return {
