@@ -6,6 +6,7 @@ import {
   DownOutlined,
   SwapOutlined,
 } from "@ant-design/icons-vue";
+import subscriptionJSON from "../assets/subscription.json";
 import * as XLSX from "xlsx-js-style";
 import draggable from "vuedraggable";
 import axios from "axios";
@@ -31,11 +32,15 @@ export default {
       isLoading: false,
       visible: false,
       showAddPlan: false,
+      showSubscription: false,
       checkAll: true,
       indeterminate: false,
       newPayerName: "",
       newProductName: "",
       newName: "",
+      subscriptionJson: {},
+      chosenSubscriptionPlanId: "",
+      hasSubscriptionValue: false,
       planList: [],
       chosenPlan: [],
       originalSelectionList: [],
@@ -158,6 +163,13 @@ export default {
               res.data.data.items.forEach((item) => {
                 item.active = true;
                 getChosenPlan.forEach((plan) => {
+                  if (
+                    subscriptionJSON[plan.id] &&
+                    this.hasSubscriptionValue === false
+                  ) {
+                    this.hasSubscriptionValue = true;
+                    this.subscriptionJson = subscriptionJSON;
+                  }
                   if (item.mergeIds && item.mergeIds[plan.id]) {
                     if (!mergeFinal[plan.id]) {
                       mergeFinal[plan.id] = {};
@@ -935,13 +947,54 @@ export default {
                 </p>
               </div>
             </div>
+            <div v-if="hasSubscriptionValue">
+              <div class="group-title">保单费率</div>
+              <div class="selection-row">
+                <div class="value-title">费率</div>
+                <div
+                  class="input-container"
+                  v-for="(plan, y) in chosenPlan"
+                  :key="y"
+                >
+                  <div class="value-column">
+                    <a-tooltip>
+                      <template v-if="final[plan.id].费率" #title>{{
+                        final[plan.id].费率
+                      }}</template>
+                      <a-input
+                        :style="{
+                          width: '190px',
+                          padding: '2px 2px 2px 11px',
+                        }"
+                        v-model:value="final[plan.id].费率"
+                      >
+                        <template #suffix>
+                          <a-button
+                            v-if="subscriptionJson[plan.id]"
+                            type="text"
+                            @click="
+                              () => {
+                                this.chosenSubscriptionPlanId = plan.id;
+                                this.showSubscription = true;
+                              }
+                            "
+                          >
+                            费率表
+                          </a-button>
+                          <div v-else style="height: 32px; width: 1px"></div>
+                        </template>
+                      </a-input>
+                    </a-tooltip>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <a-modal
-      ref="modalRef"
       v-model:visible="visible"
       :wrap-style="{ overflow: 'hidden' }"
       :title="null"
@@ -968,7 +1021,6 @@ export default {
       </div>
     </a-modal>
     <a-modal
-      ref="modalRef"
       v-model:visible="showAddPlan"
       :wrap-style="{ overflow: 'hidden' }"
       title="添加计划"
@@ -995,6 +1047,45 @@ export default {
             取消
           </a-button>
           <a-button type="primary" @click="addPlan"> 添加 </a-button>
+        </div>
+      </div>
+    </a-modal>
+    <a-modal
+      v-model:visible="showSubscription"
+      :wrap-style="{ overflow: 'hidden' }"
+      title="选择费率"
+      :footer="null"
+    >
+      <div class="sub-modal-container">
+        <div class="list-container">
+          <div
+            class="selection-row"
+            style="margin-bottom: 8px; border-bottom: 1px solid #f0f0f0"
+          >
+            <div class="sub-item">Age 年龄</div>
+            <div class="sub-item">RMB ¥ 人民币</div>
+          </div>
+          <div
+            class="selection-row"
+            v-for="(item, i) in subscriptionJson[chosenSubscriptionPlanId]"
+            :key="i"
+          >
+            <div class="sub-item">{{ item.age }}</div>
+            <div class="sub-item">
+              <a-button
+                @click="
+                  () => {
+                    this.final[this.chosenSubscriptionPlanId].费率 =
+                      item.value1;
+                    this.showSubscription = false;
+                  }
+                "
+                type="link"
+              >
+                {{ item.value1 }}
+              </a-button>
+            </div>
+          </div>
         </div>
       </div>
     </a-modal>
@@ -1112,5 +1203,13 @@ export default {
 }
 .new-row-name-error {
   color: red;
+}
+.sub-modal-container {
+  height: 60vh;
+  overflow-y: scroll;
+}
+.sub-item {
+  width: 45%;
+  text-align: center;
 }
 </style>
