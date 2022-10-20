@@ -219,6 +219,12 @@ export default {
             obj.listWithParentId.forEach((item) => {
               dataProcess(item.selectionList, item.name);
             });
+            if (obj.hasSubscriptionValue) {
+              dataProcess(
+                [{ name: "费率", active: true }],
+                "保单费率 (RMB ¥ 人民币)"
+              );
+            }
             const ws = XLSX.utils.json_to_sheet([]);
             XLSX.utils.sheet_add_aoa(
               ws,
