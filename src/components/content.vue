@@ -127,6 +127,7 @@ export default {
       return option.key.toLowerCase().indexOf(input.toLowerCase()) >= 0;
     },
     getDetails() {
+      this.hasSubscriptionValue = false;
       this.isLoading = true;
       const planId = [];
       this.planList = this.planList.filter((item) => !item.isNew);
@@ -546,6 +547,12 @@ export default {
       this.listWithParentId.forEach((item) => {
         dataProcess(item.selectionList, item.name);
       });
+      if (this.hasSubscriptionValue) {
+        dataProcess(
+          [{ name: "费率", active: true }],
+          "保单费率 (RMB ¥ 人民币)"
+        );
+      }
       const ws = XLSX.utils.json_to_sheet([]);
       XLSX.utils.sheet_add_aoa(
         ws,
