@@ -251,10 +251,14 @@ export default {
         if (newRowNameStr) {
           this.listWithParentId.forEach((item) => {
             if (parentId === item.parentId) {
+              const lastSeq =
+                item.selectionList[item.selectionList.length - 1].seq;
               item.selectionList.push({
                 name: newRowNameStr,
                 values: [],
                 active: true,
+                parentId,
+                seq: lastSeq + 1,
               });
             }
           });
@@ -264,10 +268,12 @@ export default {
       } else {
         if (this.newRowName.general) {
           this.newRowNameError.general = "";
+          const lastSeq = this.selectionList[this.selectionList.length - 1].seq;
           const newValue = {
             name: this.newRowName.general,
             values: [],
             active: true,
+            seq: lastSeq + 1,
           };
           this.selectionList = [...this.selectionList, newValue];
           this.newRowName.general = "";
@@ -308,6 +314,10 @@ export default {
     saveAnswers() {
       const postPlan = [];
       const postData = [];
+      let allSelection = [...this.selectionList];
+      this.listWithParentId.forEach((list) => {
+        allSelection = [...allSelection, ...list.selectionList];
+      });
       this.chosenPlan.forEach(({ id, payer, productName, name, isNew }) => {
         if (isNew) {
           postPlan.push({
@@ -318,40 +328,43 @@ export default {
             typeId: this.typeId,
           });
         }
-        this.originalSelectionList.forEach(
-          ({ seq, mergeIds, name, parentId }) => {
-            if (mergeIds && mergeIds[id]) {
-              const answer = this.mergeFinal[id][mergeIds[id]];
-              if (this.mergeAnswerList[id][mergeIds[id]].indexOf(answer) > -1) {
-                console.log("merge answer exists");
+
+        allSelection.forEach(({ seq, mergeIds, name, parentId }) => {
+          if (mergeIds && mergeIds[id]) {
+            const answer = this.mergeFinal[id][mergeIds[id]];
+            if (this.mergeAnswerList[id][mergeIds[id]].indexOf(answer) > -1) {
+              console.log("merge answer exists");
+            } else {
+              postData.push({
+                planId: id,
+                name,
+                value: answer,
+                parentId,
+                mergeId: mergeIds[id],
+                seq,
+              });
+            }
+          } else {
+            const answer = this.final[id][name];
+            if (answer) {
+              if (
+                this.answerList[name] &&
+                this.answerList[name][id].indexOf(answer) > -1 &&
+                !isNew
+              ) {
+                console.log("answer exists");
               } else {
                 postData.push({
                   planId: id,
                   name,
                   value: answer,
                   parentId,
-                  mergeId: mergeIds[id],
                   seq,
                 });
               }
-            } else {
-              const answer = this.final[id][name];
-              if (answer) {
-                if (this.answerList[name][id].indexOf(answer) > -1 && !isNew) {
-                  console.log("answer exists");
-                } else {
-                  postData.push({
-                    planId: id,
-                    name,
-                    value: answer,
-                    parentId,
-                    seq,
-                  });
-                }
-              }
             }
           }
-        );
+        });
       });
       if (postData.length > 0) {
         axios({
