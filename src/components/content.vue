@@ -594,51 +594,55 @@ export default {
 
 <template>
   <main>
-    <div class="scroll-container">
+    <div class="main-container">
       <div class="inner-container">
         <div class="side-bar">
-          <a-checkbox
-            style="margin-left: 8px"
-            :indeterminate="indeterminate"
-            v-model:checked="checkAll"
-            @change="onCheckAllChange"
-          >
-            全选
-          </a-checkbox>
-          <a-checkbox
-            v-for="(option, x) in planList"
-            :key="x"
-            v-model:checked="option.checked"
-            @change="onCheckChange"
-          >
-            {{
-              `${option.payer}${option.name ? `-${option.name}` : ""}${
-                option.productName ? `-${option.productName}` : ""
-              }`
-            }}
-          </a-checkbox>
-          <a-button
-            type="primary"
-            class="export-button"
-            @click="getDetails"
-            :loading="isLoading"
-            >获取计划</a-button
-          >
-          <a-button
-            type="primary"
-            class="export-button"
-            @click="() => showModal('EXPORT')"
-            >导出列表</a-button
-          >
-          <a-button
-            v-if="chosenPlan.length > 0"
-            type="primary"
-            class="export-button"
-            @click="() => showModal('SAVE')"
-            >储存选项</a-button
-          >
+          <div class="side-bar-selections">
+            <a-checkbox
+              style="margin-left: 8px"
+              :indeterminate="indeterminate"
+              v-model:checked="checkAll"
+              @change="onCheckAllChange"
+            >
+              全选
+            </a-checkbox>
+            <a-checkbox
+              v-for="(option, x) in planList"
+              :key="x"
+              v-model:checked="option.checked"
+              @change="onCheckChange"
+            >
+              {{
+                `${option.payer}${option.name ? `-${option.name}` : ""}${
+                  option.productName ? `-${option.productName}` : ""
+                }`
+              }}
+            </a-checkbox>
+          </div>
+          <div class="side-bar-buttons">
+            <a-button
+              type="primary"
+              class="export-button"
+              @click="getDetails"
+              :loading="isLoading"
+              >获取计划</a-button
+            >
+            <a-button
+              type="primary"
+              class="export-button"
+              @click="() => showModal('EXPORT')"
+              >导出列表</a-button
+            >
+            <a-button
+              v-if="chosenPlan.length > 0"
+              type="primary"
+              class="export-button"
+              @click="() => showModal('SAVE')"
+              >储存选项</a-button
+            >
+          </div>
         </div>
-        <div>
+        <div class="scroll-container">
           <div class="title-container">
             <a-button
               v-if="chosenPlan.length > 0"
@@ -1100,8 +1104,8 @@ export default {
 </template>
 
 <style scoped>
-.scroll-container {
-  overflow-y: auto;
+.main-container {
+  /* overflow-y: auto; */
   width: calc(100vw - 160px);
   height: calc(100vh - 46px);
 }
@@ -1112,16 +1116,37 @@ export default {
   display: flex;
 }
 .side-bar {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 200px;
   min-width: 200px;
   border-right: solid 1px #f0f0f0;
-  padding-top: 8px;
+  height: calc(100vh - 46px);
 }
-
+.side-bar-selections {
+  overflow-y: auto;
+  padding: 8px 0 100px;
+  margin-bottom: 100px;
+  display: flex;
+  flex-direction: column;
+}
+.side-bar-buttons {
+  position: absolute;
+  bottom: 0px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0 0 24px;
+  background: white;
+}
 .export-button {
   margin: 12px 8px 0;
+}
+.scroll-container {
+  overflow: auto;
+  height: calc(100vh - 46px);
+  width: calc(100vw - 360px);
 }
 .title-container {
   display: flex;
