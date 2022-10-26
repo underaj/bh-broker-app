@@ -13,6 +13,8 @@ declare module '@vue/runtime-core' {
     AMenu: typeof import('ant-design-vue/es')['Menu']
     AMenuItem: typeof import('ant-design-vue/es')['MenuItem']
     AModal: typeof import('ant-design-vue/es')['Modal']
+    ASelect: typeof import('ant-design-vue/es')['Select']
+    ASelectOption: typeof import('ant-design-vue/es')['SelectOption']
     ATabPane: typeof import('ant-design-vue/es')['TabPane']
     ATabs: typeof import('ant-design-vue/es')['Tabs']
     ATooltip: typeof import('ant-design-vue/es')['Tooltip']

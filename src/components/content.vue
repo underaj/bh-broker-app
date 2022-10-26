@@ -39,7 +39,11 @@ export default {
       newPayerName: "",
       newProductName: "",
       newName: "",
-      subscriptionJson: {},
+      fee: {
+        person: "",
+        age: "",
+      },
+      subscriptionJson: subscriptionJSON,
       chosenSubscriptionPlanId: "",
       hasSubscriptionValue: false,
       planList: [],
@@ -108,6 +112,26 @@ export default {
     showModal(mode) {
       this.mode = mode;
       this.showConfirmModal = true;
+    },
+    toggleAddClaimPerson() {
+      this.fee = {};
+      this.showAddClaimPerson = !this.showAddClaimPerson;
+    },
+    addClaimPerson() {
+      const { person, age } = this.fee;
+      this.feeList = [...this.feeList, { name: person }];
+      console.log("here", age);
+      this.chosenPlan.forEach(({ id }) => {
+        if (this.subscriptionJson[id]) {
+          this.subscriptionJson[id].forEach((item) => {
+            if (item.age === age) {
+              this.final[id][person] = item.value1;
+              console.log("here", this.final);
+            }
+          });
+        }
+      });
+      this.toggleAddClaimPerson();
     },
     getPlans() {
       axios
@@ -1002,7 +1026,7 @@ export default {
                 style="margin: 8px 16px"
                 type="primary"
                 size="small"
-                @click="showAddClaimPerson = true"
+                @click="toggleAddClaimPerson"
               >
                 添加受保人
               </a-button>
@@ -1011,6 +1035,46 @@ export default {
         </div>
       </div>
     </div>
+
+    <a-modal
+      v-model:visible="showAddClaimPerson"
+      :wrap-style="{ overflow: 'hidden' }"
+      :title="null"
+      :footer="null"
+    >
+      <div class="modal-container">
+        <p style="margin-bottom: 4px">受保人：</p>
+        <a-input
+          style="width: 250px"
+          placeholder="请输入受保人：父母、儿子、女儿"
+          v-model:value="fee.person"
+        ></a-input>
+        <p style="margin-bottom: 4px; margin-top: 8px">年龄：</p>
+        <a-select
+          style="width: 250px"
+          placeholder="请选着受保人年龄"
+          v-model:value="fee.age"
+        >
+          <a-select-option
+            v-for="(item, x) in subscriptionJson['2']"
+            :key="x"
+            :value="item.age"
+            >{{ item.age }}</a-select-option
+          >
+        </a-select>
+        <div class="modal-button-row">
+          <a-button style="margin-right: 8px" @click="toggleAddClaimPerson">
+            取消
+          </a-button>
+          <a-button
+            :disabled="!fee.person"
+            type="primary"
+            @click="addClaimPerson"
+            >确定</a-button
+          >
+        </div>
+      </div>
+    </a-modal>
 
     <a-modal
       v-model:visible="showConfirmModal"
@@ -1244,6 +1308,7 @@ export default {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+  margin-top: 8px;
 }
 .new-row-name-error {
   color: red;
