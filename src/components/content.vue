@@ -30,9 +30,10 @@ export default {
   data() {
     return {
       isLoading: false,
-      visible: false,
+      showConfirmModal: false,
       showAddPlan: false,
       showSubscription: false,
+      showAddClaimPerson: false,
       checkAll: true,
       indeterminate: false,
       newPayerName: "",
@@ -46,6 +47,7 @@ export default {
       originalSelectionList: [],
       selectionList: [],
       listWithParentId: [],
+      feeList: [],
       answerList: {},
       final: {},
       mergeAnswerList: {},
@@ -105,7 +107,7 @@ export default {
     },
     showModal(mode) {
       this.mode = mode;
-      this.visible = true;
+      this.showConfirmModal = true;
     },
     getPlans() {
       axios
@@ -388,10 +390,10 @@ export default {
             "Content-Type": "application/json",
           },
         }).then(() => {
-          this.visible = false;
+          this.showConfirmModal = false;
         });
       } else {
-        this.visible = false;
+        this.showConfirmModal = false;
       }
     },
     exportExcel() {
@@ -586,7 +588,7 @@ export default {
       const myWorkBook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(myWorkBook, ws, "Sheet1");
       XLSX.writeFile(myWorkBook, "保险医疗计划.xlsx");
-      this.visible = false;
+      this.showConfirmModal = false;
     },
   },
 };
@@ -645,7 +647,6 @@ export default {
         <div class="scroll-container">
           <div v-if="chosenPlan.length > 0" class="title-container">
             <a-button
-              v-if="chosenPlan.length > 0"
               type="primary"
               size="small"
               @click="toggleAddPlan"
@@ -670,9 +671,7 @@ export default {
                 </div>
               </template>
             </draggable>
-            <div v-if="chosenPlan.length > 0" class="active-title-container">
-              是否显示
-            </div>
+            <div class="active-title-container">是否显示</div>
           </div>
           <div class="content-container">
             <draggable v-model="selectionList" item-key="name" handle=".handle">
@@ -958,10 +957,10 @@ export default {
                 </p>
               </div>
             </div>
-            <div v-if="hasSubscriptionValue">
+            <div v-if="chosenPlan.length > 0">
               <div class="group-title">保单费率</div>
-              <div class="selection-row">
-                <div class="value-title">费率</div>
+              <div v-for="(item, x) in feeList" class="selection-row" :key="x">
+                <div class="value-title">{{ item.name }}</div>
                 <div
                   class="input-container"
                   v-for="(plan, y) in chosenPlan"
@@ -969,15 +968,15 @@ export default {
                 >
                   <div class="value-column">
                     <a-tooltip>
-                      <template v-if="final[plan.id].费率" #title>{{
-                        final[plan.id].费率
+                      <template v-if="final[plan.id][item.name]" #title>{{
+                        final[plan.id][item.name]
                       }}</template>
                       <a-input
                         :style="{
                           width: '190px',
                           padding: '2px 2px 2px 11px',
                         }"
-                        v-model:value="final[plan.id].费率"
+                        v-model:value="final[plan.id][item.name]"
                       >
                         <template #suffix>
                           <a-button
@@ -999,6 +998,14 @@ export default {
                   </div>
                 </div>
               </div>
+              <a-button
+                style="margin: 8px 16px"
+                type="primary"
+                size="small"
+                @click="showAddClaimPerson = true"
+              >
+                添加受保人
+              </a-button>
             </div>
           </div>
         </div>
@@ -1006,7 +1013,7 @@ export default {
     </div>
 
     <a-modal
-      v-model:visible="visible"
+      v-model:visible="showConfirmModal"
       :wrap-style="{ overflow: 'hidden' }"
       :title="null"
       :footer="null"
@@ -1015,7 +1022,7 @@ export default {
         <p v-if="mode === 'EXPORT'">确定下载Excel？</p>
         <p v-if="mode === 'SAVE'">确定储存选项？</p>
         <div class="modal-button-row">
-          <a-button style="margin-right: 8px" @click="visible = false">
+          <a-button style="margin-right: 8px" @click="showConfirmModal = false">
             取消
           </a-button>
           <a-button
@@ -1157,6 +1164,7 @@ export default {
   background: white;
   border-bottom: solid 1px #f0f0f0;
   z-index: 99;
+  width: fit-content;
 }
 .add-plan-button {
   margin-left: 14px;
