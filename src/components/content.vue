@@ -119,7 +119,7 @@ export default {
     },
     addClaimPerson() {
       const { person, age } = this.fee;
-      this.feeList = [...this.feeList, { name: person }];
+      this.feeList = [...this.feeList, { name: person, active: true }];
       console.log("here", age);
       this.chosenPlan.forEach(({ id }) => {
         if (this.subscriptionJson[id]) {
@@ -573,11 +573,8 @@ export default {
       this.listWithParentId.forEach((item) => {
         dataProcess(item.selectionList, item.name);
       });
-      if (this.hasSubscriptionValue) {
-        dataProcess(
-          [{ name: "费率", active: true }],
-          "保单费率 (RMB ¥ 人民币)"
-        );
+      if (this.feeList.length > 0) {
+        dataProcess(this.feeList, "保单费率 (RMB ¥ 人民币)");
       }
       const ws = XLSX.utils.json_to_sheet([]);
       XLSX.utils.sheet_add_aoa(
