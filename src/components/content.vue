@@ -643,7 +643,7 @@ export default {
           </div>
         </div>
         <div class="scroll-container">
-          <div class="title-container">
+          <div v-if="chosenPlan.length > 0" class="title-container">
             <a-button
               v-if="chosenPlan.length > 0"
               type="primary"
@@ -1149,10 +1149,14 @@ export default {
   width: calc(100vw - 360px);
 }
 .title-container {
+  position: sticky;
+  top: 0;
   display: flex;
   flex-direction: row;
-  height: 30px;
-  margin-top: 16px;
+  padding: 16px 0 12px;
+  background: white;
+  border-bottom: solid 1px #f0f0f0;
+  z-index: 99;
 }
 .add-plan-button {
   margin-left: 14px;
